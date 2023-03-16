@@ -4,14 +4,23 @@ import heapq
 import itertools
 import math
 import matplotlib.pyplot as plt
+plt.plot(), plt.close()
 import numpy as np
 import os
 from functools import reduce
 import time
 import tracemalloc
 import warnings
+# fixme
+# from collections import Counter
 
 
+# general formulation of the problem:
+# this physical problem may probably be solved using a MIP algorithm (Mixed-Integer). If so, it would be less time-consuming
+
+# general fixme:
+# consider the use of numpy arrays
+# same names must be use for same instances
 def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_step_productions: list = None,
                        p_ranges_storages: list = None, p_max_discharges: list = None, p_min_discharges: list = None,
                        p_step_discharges: list = None, p_max_charges: list = None, p_min_charges: list = None,
@@ -44,7 +53,7 @@ def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_st
 
     # BUILD DEMAND DICTIONARY
     max_demand = sum(p for p in p_max_productions if p > 0) + sum(p_max_discharges) + sum(p_max_imposed) \
-                 + max(min(flexi_dsm), -min(flexi_dsm))
+                 + max(min(flexi_dsm), -min(flexi_dsm))    # fixme: min is evaluated twice, max(x, -x) is abs
     min_demand = sum(p for p in p_min_productions if p < 0) + sum(p_max_charges) + sum(p_max_dissipation) \
                  - max(0, max(flexi_dsm))
     # else:
@@ -98,12 +107,15 @@ def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_st
 
             # MULTI-LAYER FLEXIBILITY DISTRIBUTION
             print("Starting 'while' loop.")
+            # fixme: append --> + [0] * k
             while len(flexi_dist_prod) < len(flexi_dist_all):
                 flexi_dist_prod.append(0)
             while len(flexi_dist_dissip) < len(flexi_dist_all):
                 flexi_dist_dissip.append(0)
 
             if flexi_dist_prod and flexi_dist_dissip:
+                # note: not Numpy native if not same length
+
                 flexi_by_dissipation = [d - p for d, p in zip(flexi_dist_dissip, flexi_dist_prod)]
             else:
                 flexi_by_dissipation = []
@@ -141,6 +153,7 @@ def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_st
             # monte_carlo_estimation(flexi_dist_all, max_prod)
             # TODO: Calculate the specific contribution of each type of unit to flexibility
         else:
+            # fixme: NotImplementedError more appropriate
             raise ValueError("The task named '{}' was not recognized. Only 'Distribution' is available.".format(t))
 
     # assess_effective_flexibility(dictionary_struct_ranges, demand_dict, imposed_productions_max_powers)
@@ -150,7 +163,7 @@ def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_st
     # print("Available min powers = {}".format(p_min_piloted))
     # print("Number of available units = {}".format(len(p_max_piloted)))
     # print("Maximal combined capacity = {}".format(sum(p_max_piloted)))
-    toc_overall = time.time()  # Initialize clock
+    toc_overall = time.time()  # Initialize clock # fixme wrong comment
     lapse_overall = toc_overall - tic_overall
     print("Total processing time: {}".format(lapse_overall))
 
@@ -185,8 +198,11 @@ def build_demand_dictionary(max_range, min_range, step):
     # max_range += max(range_dsm)  # + sum(imposed_prod)  # Update max range with dsm contribution & imposed production
     # debug_print(min_range, "Minimal possible network power")  # For debug
     # debug_print(max_range, "Maximal possible network power")  # For debug
+    # fixme: why are are min_range and max_range different from min (demand_series) and max(demand_series)
     demand_dict_keys = list(np.arange(min_range, max_range + 1, step=step))  # Set keys of demand load dictionary
     # TODO: Do max_range + 1/2 of the network's operating steps, instead of max_range + 1
+    # fixme: 'demand_dict_keys[-1] > max_range' likely to happen if step < 1.
+    # 'demand_dict_keys[-2] > max_range' will happe if 0<step<0.5, etc...
     if demand_dict_keys[-1] > max_range:  # Sometimes np.arange yields one too many increments. This loop clears that.
         del demand_dict_keys[-1]
     debug_print(demand_dict_keys, "demand_dict_keys")  # For debug
@@ -194,14 +210,19 @@ def build_demand_dictionary(max_range, min_range, step):
     # debug_print(demand_dict_keys, "demand_dict_keys")
     # debug_print(demand_dict_init_values, "demand_dict_init_values")
 
+    # fixme: see dict.fromkeys method
     dict_demand_load = dict(zip(demand_dict_keys, demand_dict_init_values))  # Initialize demand load dictionary
 
     # GENERATE LIST OF DEMAND INSTANCES FROM DEMAND FILE
+    # fixme: use pathlib
     work_path = os.getcwd()
     # demand_file = open(work_path + "/demand_file.txt", "r")
-    demand_file = open(work_path + "/demand_file_illustrative_case.txt", "r")
+    # fixme
+    demand_file = [(27+33)/2 + ((33-27)/2) * math.sin(2*k + (k**2)%3) for k in range(200)] #open(work_path + "/demand_file_illustrative_case.txt", "r")
     # demand_file = open(work_path + "/demand_file_adjusted_v3.txt", "r")
+    # fixme: list(map[...])
     demand_series = [c for c in map(float, demand_file)]
+    # fixme: prefer Numpy conditionnal extraction.
     for d in demand_series[:]:  # This loop removes any demand over the network's maximal power, and warns the user.
         if d > max_range:
             warnings.warn(
@@ -211,6 +232,8 @@ def build_demand_dictionary(max_range, min_range, step):
     # debug_print(dict_demand_load, "dict_demand_load")  # For debug
     # debug_print(demand_series, "demand_series")  # For debug
 
+    # fixme: unsure of the role of these lines
+    # 'key1 < d <= key2' instead of 'd in dict_demand_load.keys()'?
     for d in demand_series:
         if d in dict_demand_load.keys():
             dict_demand_load[d] += 1
@@ -219,7 +242,7 @@ def build_demand_dictionary(max_range, min_range, step):
 
     debug_print(dict_demand_load, "dict_demand_load")  # For debug
 
-    demand_file.close()
+    # demand_file.close() # fixme
 
     # PLOT DEMAND LOAD DISTRIBUTION (Outdated since demand is plotted together with flexibility distributions)
     # fig, ax = plt.subplots()
@@ -238,29 +261,41 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
     print(">> Determining structural flexibility distribution through new method.")
     print("The list of power ranges is: {}".format(p_range_all_units))
     print("And it is being compared against the following demand: {}".format(dict_demand))
+
+    # fixme: useless with fromkeys. Use dict_demand instead
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
+    # fixme: see dict.fromkeys
     dict_struc_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize structural flexibility dictionary
     dict_struc_flexi[0] += 1  # To take into account the possibility of not running any unit
     for demand in list_demand:
         for pick in range(1, len(p_range_all_units) + 1):
+            """
+            review notes: for an increasing number of units, determines the min total power and max total power
+            """
             print(">> Analyzing structural combinations of {} unit(s) against demand = {}.".format(pick, demand))
 
             # Checking whether the demand escapes the combinations with minimal or maximal combined powers
+            # fixme: probably useless copy
             choose_from = copy.deepcopy(p_range_all_units)
+            # fixme: warning: lexicographic order is used if type(choose_from)=List[List]
             lowest_possible_power = sum([x[0] for x in heapq.nsmallest(pick, choose_from)])
+            # fixme: do not reverse. Use key param of heapq.nlargest
+            # fixme: could be stored outside of the loops
             [x.sort(reverse=True) for x in choose_from]
             highest_possible_power = sum([x[0] for x in heapq.nlargest(pick, choose_from)])
             if demand < lowest_possible_power or demand > highest_possible_power:
                 print(">> No configuration of {} unit(s) can cover a demand of {}.".format(pick, demand))
                 print(">> Skipping configurations of {} unit(s)".format(pick))
                 continue
-
             if pick <= len(p_range_all_units)/2:
                 symmetry = False
             else:
                 symmetry = True
                 pick = len(p_range_all_units) - pick  # Shortcut exploiting the symmetry of combinatorial distributions
 
+            # note: symmetry exploit probably useless
+            # 1) since time complexity related to the number of subsets (same for both pick and n-pick elements-per-subset)
+            # 2) other kinds of symmetry might be hardcoded in itertools
             for structural_combination in itertools.combinations(p_range_all_units, pick):  # Scan every unit combination
                 if symmetry is True:
                     inverse_choice = copy.deepcopy(p_range_all_units)
@@ -271,7 +306,7 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
                         # print("Inverse choice list after removal: {}".format(inverse_choice))
                         # print("p_ranges_all_units after removal: {}".format(p_ranges_all_units))
                     structural_combination = inverse_choice
-
+                # fixme: if len(x)==2 and given sorted as parameters, replace with indexing (x[0], x[1])
                 min_range = sum([min(x) for x in structural_combination])
                 max_range = sum([max(x) for x in structural_combination])
 
@@ -287,6 +322,9 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
                         net_power = sum(operational_combination)
                         # print("The net power of this combination is: {}".format(net_power))
                         # print("The list of demand tranches not yet covered are: {}".format(demand_not_covered))
+                        # what if 'demand' is in between (i.e. part-load necessary)?
+                        # fixme: very unlikely to happen if net_power is int and demand is unconstrained float
+                        # condition is met only for fake integer demands that were defined
                         if net_power == demand:
                             dict_struc_flexi[demand] += 1  # Operational flexibility increases with every valid combination
                             # print("This structural combination counted towards flexibility in demand = {}: {}".
@@ -304,7 +342,9 @@ def operational_flexibility_distribution(dict_demand, operating_ranges_list, p_s
     print(">> Started computing the operational flexibility distribution.")
     print(">> The demand dictionary is: {}".format(dict_demand))
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
+    # fixme: see dict.fromkeys
     dict_oper_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize operational flexibility dictionary
+    # fixme: copy is useless
     tuple_p_ranges_with_zeros = tuple(copy.deepcopy(operating_ranges_list))  # Create tuple deep copy of unit list
     p_ranges_with_zeros = []  # Initialize final list of power ranges with zeros in them
     # debug_print(tuple_p_ranges_with_zeros, "p_ranges_with_zeros before changes")
@@ -314,6 +354,8 @@ def operational_flexibility_distribution(dict_demand, operating_ranges_list, p_s
         min_pow = min(x)
         max_pow = max(x)
         debug_print(max_pow, "max_pow")
+        # fixme: 'list' in 'list(np.[...])' is useless
+        # fixme: why 'float'?
         unit = [round(float(c), 3) for c in list(np.arange(min_pow, max_pow + 0.75 * y, y))]  # TODO: This is assuming a step of 1, generalize for any step
         debug_print(unit, "np.arange generated")
         if 0 not in unit:
@@ -336,11 +378,13 @@ def operational_flexibility_distribution(dict_demand, operating_ranges_list, p_s
     #     dict_oper_flexi[net_power] += 1
     debug_print(p_ranges_with_zeros, "p_ranges_with_zeros")
     for oper_combi in itertools.product(*p_ranges_with_zeros):  # Scan every combination of powers
+        # fixme: why 'float'?
         net_power = round(float(sum(oper_combi)), 2)
         if net_power not in dict_oper_flexi:
             dict_oper_flexi[net_power] = 1
         else:
             dict_oper_flexi[net_power] += 1  # TODO: Failsafe in case the net power does not exist in the dictionary
+        # fixme: 'list' is useless
         progress = sum(list(dict_oper_flexi.values())) / operational_combinations
         if progress > milestone:
             print("{} % of the operational combinations have been analyzed.".format(round(milestone*100, 10)))
@@ -348,6 +392,7 @@ def operational_flexibility_distribution(dict_demand, operating_ranges_list, p_s
     debug_print(dict_oper_flexi, "dict_oper_flexi")
     mykeys = list(dict_oper_flexi.keys())
     mykeys.sort()
+    # fixme: list is not needed. sorted_dict_oper_flexi = sorted(dict_oper_flexi.items())
     sorted_dict_oper_flexi = {i: dict_oper_flexi[i] for i in mykeys}
     debug_print(sorted_dict_oper_flexi, "sorted_dict_oper_flexi")
     oper_flexibility_powers = list(sorted_dict_oper_flexi.keys())
@@ -357,6 +402,11 @@ def operational_flexibility_distribution(dict_demand, operating_ranges_list, p_s
     plot_x = []
     plot_y = []
     key = -1
+    # fixme: iterate over the dictionary using .items()
+    # for key, value in oper_flexibility_dist.items():
+    #     if value >0:
+    #         plot_x.append(key)
+    #         plot_y.append(value)
     for value in oper_flexibility_dist:
         key += 1
         if value > 0:
@@ -378,6 +428,8 @@ def both_flexibility_distributions(dict_demand, p_range_all_units):
     print(">> Determining flexibility distributions through the new method.")
     print("The list of power ranges is: {}".format(p_range_all_units))
     print("And it is being compared against the following demand: {}".format(dict_demand))
+
+    # fixme: 'list' is useless, use dict.fromkeys()
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
     dict_struc_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize structural flexibility dictionary
     dict_oper_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize operational flexibility dictionary
@@ -393,6 +445,7 @@ def both_flexibility_distributions(dict_demand, p_range_all_units):
                 net_power = sum(operational_combination)
                 # print("The net power of this combination is: {}".format(net_power))
                 # print("The list of demand tranches not yet covered are: {}".format(demand_not_covered))
+                # fixme: have you tried it? I think this raises KeyError if net_power not in list_demand
                 dict_oper_flexi[net_power] += 1  # Operational flexibility increases with every valid combination
                 # if net_power in demand_not_covered:
                 #     dict_struc_flexi[net_power] += 1  # Structural flexibility only increases by 1 for each combination
@@ -401,6 +454,9 @@ def both_flexibility_distributions(dict_demand, p_range_all_units):
     print("Structural flexibility distribution: {}".format(list(dict_struc_flexi.values())))
     print("Operational flexibility distribution: {}".format(list(dict_oper_flexi.values())))
     return dict_struc_flexi, dict_oper_flexi
+
+
+
 
 
 def assess_dsm_effects(demand_range: list = None, target_distribution: list = None, flexi_dsm: list = None,
@@ -412,11 +468,15 @@ def assess_dsm_effects(demand_range: list = None, target_distribution: list = No
     tic_dsm_effects = time.time()  # Initialize clock
     print(">> Started assessing the effects of DSM on the flexibility distribution.")
 
+    # fixme: initialize dsm_distribution with the exact number of elements it will contain, since you know this number  (len(target_distribution))
     dsm_distribution = []
     debug_print(target_distribution, "target_distribution")
+    # fixme: if p_dsm almost always equals 1, add a special 'if' to by pass division by one
+    # fixme/warning: int(x) where x is a negative float negative is -int(-x), is it ok ?
     flexi_dsm = [int(p_dsm/dsm_step) for p_dsm in flexi_dsm]  # Convert DSM information from power to indices
 
     for c in range(len(target_distribution)):
+        # fixme important: compute and store outside of the loop every variable that does not depend on 'c' (directly or indirectly)
         lower_index = max(0, c + min(0, int(min(flexi_dsm))))  # Maximal drop in demand list thanks to DSM
         upper_index = min(len(target_distribution) - 1, c + max(0, int(max(flexi_dsm))))  # Maximal increase in list
         dsm_range_index = np.arange(lower_index, upper_index + 1)  # Scan all indices touched by DSM
@@ -424,6 +484,7 @@ def assess_dsm_effects(demand_range: list = None, target_distribution: list = No
         lower_dsm_effect = target_distribution[c] - min(dsm_range)  # Maximal drop in flexibility due to DSM
         upper_dsm_effect = max(dsm_range) - target_distribution[c]  # Maximal increase in flexibility thanks to DSM
         local_dsm_effect = np.vstack([lower_dsm_effect, upper_dsm_effect])  # Record both DSM effects on that demand
+        # fixme: since dsm_distribution is initialized (with 0), use dsm_distribution[c] = local_dsm_effect instead of append
         dsm_distribution.append(local_dsm_effect)  # Update array containing DSM effects demand by demand
         # debug_print(lower_index, "lower_index")
         # debug_print(upper_index, "upper_index")
@@ -435,6 +496,8 @@ def assess_dsm_effects(demand_range: list = None, target_distribution: list = No
 
     for x in demand_range:
         label = default_label if x == 0 else None
+        # fixme: compute and store outside of the loop every thing that does not depend on x
+        # fixme: max(k, -k) is abs(k)
         y = int((x + max(demand_range[0], -demand_range[0])) / abs(demand_range[1] - demand_range[0]))
         # debug_print(demand_range, "demand_range")
         # debug_print(x, "x")
@@ -456,7 +519,6 @@ def plot_flexibility_distribution(approach, demand_range, flexi_dist_prod: list 
                                   flexi_dist_all: list = None, flexi_dsm: list = None, flexi_by_storage: list = None,
                                   flexi_by_dissipation: list = None, flexi_dist_dissip: list = None,
                                   demand_dict: dict = None, plotting_step: int = 1):
-
     print(">> Started plotting {} flexibility distribution with the following lists of units:". format(approach))
     print("Production units: {}".format(flexi_dist_prod is not None))
     print("Dissipation units: {}".format(flexi_dist_dissip is not None))
@@ -492,6 +554,7 @@ def plot_flexibility_distribution(approach, demand_range, flexi_dist_prod: list 
         elif flexi_by_storage:  # There are production and dissipation units.
             ax.bar(demand_range, flexi_by_storage, width, bottom=flexi_dist_prod, color='darkorange', label='+Storage')
             assess_dsm_effects(demand_range, flexi_dist_all, flexi_dsm, '+DSM', dsm_step=plotting_step)
+
         else:  # There are production units only.
             if flexi_dsm:
                 assess_dsm_effects(demand_range, flexi_dist_prod, flexi_dsm, '+DSM', dsm_step=plotting_step)
@@ -515,6 +578,7 @@ def plot_flexibility_distribution(approach, demand_range, flexi_dist_prod: list 
         ax2 = ax.twinx()  # plot bar chart on axis #2
         debug_print(demand_range, "demand range")  # For debug
         debug_print(demand_dict.values(), "demand dict values")  # For debug
+        # fixme: .values() is useless
         debug_print(len(demand_dict.values()), "length demand dict values")  # For debug
         ax2.plot(demand_range, demand_dict.values(), color='b')
         ax2.grid(False)  # turn off grid #2
@@ -549,9 +613,12 @@ def assess_effective_flexibility(dict_struct_ranges, dict_demand_load, imposed_p
     dict_struct_occurrences = dict()
     dict_struct_probs = dict()
     excess_instances = 0  # Counter of additional instances artificially added for normalization purposes
+    # fixme: use .items().
+    #  e.g.: for d, frequency in dict_demand_load.items():
     for d in dict_demand_load.keys():  # Scan every power tranche in the demand dictionary
         frequency = dict_demand_load[d]  # Identify frequency (=no. of occurrences) of the power tranche
         # dict_op_probs[d] = frequency / sum(list(dict_demand_load.values()))  # Allocate operational probability
+        # fixme: same than previous
         for s in dict_struct_ranges.keys():  # Scan every structural combination
             combined_range = dict_struct_ranges[s]  # Retrieve combined power range of the combination
             occurrences = combined_range.count(d)  # Count occurrences of the demand within that combination's range
@@ -560,19 +627,23 @@ def assess_effective_flexibility(dict_struct_ranges, dict_demand_load, imposed_p
             struct_frequency = frequency * occurrences  # Allocate structural frequencies proportional to occurrences
             excess_instances += frequency * max(0, occurrences - 1)  # Keep track of additional instances given
             # print("excess_instances = {}".format(excess_instances))
+            # fixme: .keys() is useless
             if s in dict_struct_occurrences.keys():
                 dict_struct_occurrences[s] += struct_frequency  # Save data in structural dictionary
             else:
                 dict_struct_occurrences[s] = struct_frequency  # Save data in structural dictionary
     sum_occurrences = sum(dict_struct_occurrences.values())
+    # fixme: use .items()
     for s in dict_struct_occurrences.keys():
         dict_struct_probs[s] = dict_struct_occurrences[s] / sum_occurrences  # TODO: Prevent divisions by zero
 
     # DETERMINE PROBABILITY DISTRIBUTION FOR THE NETWORK'S OPERATIONAL STATES
     for s in dict_struct_occurrences.keys():  # Scan absolute frequency for every structural combination
+        # fixme: list(..) and .keys() (both) are useless
         old_max_index = max(list(dict_op_occurrences.keys())) if dict_op_occurrences.keys() else 0
         for do in np.arange(1, len(dict_struct_ranges[s]) + 1):
             o = old_max_index + do  # Update index for updating operational dictionary
+            # fixme: move outside of the loop what does not depend on 'do' (or 'o')
             dict_op_occurrences[o] = dict_struct_occurrences[s] / len(dict_struct_ranges[s])  # Allocate op. probs.
     for o in dict_op_occurrences.keys():
         dict_op_probs[o] = dict_op_occurrences[o] / sum(dict_op_occurrences.values())  # TODO: Prevent divisions by zero
@@ -654,6 +725,7 @@ approaches = ["Structural"]
 piloted_productions_unit_names = ["P-01", "P-02", "P-03", "P-04"]  # List your units' names
 piloted_productions_power_ranges = [[2, 3], [3, 4], [14, 15], [8, 9, 10, 11]]
 piloted_productions_power_steps = [1, 1, 1]  # Relative power steps
+
 gcd_step = 1
 dissipation_unit_names = ["D-01"]
 dissipation_power_ranges = [[-1]]  # Do not include the zero, it is done automatically
@@ -677,7 +749,7 @@ forbidden_combinations = [["Discharge-1", "Charge-1"]]
 # -------------------------------------
 # MULTIPLE UNITS SCENARIO (FOR TESTING)
 # -------------------------------------
-
+"""
 # tasks = ["Distribution"]
 # approaches = ["Operational"]
 # nb = 4
@@ -699,15 +771,17 @@ forbidden_combinations = [["Discharge-1", "Charge-1"]]
 # storage_charge_max_powers = [-1]  # Same as above, but for storage charge
 # storage_charge_min_powers = [-1]
 # storage_charge_power_steps = [1/(max(1, mx-mn)) for mx, mn in zip(storage_charge_max_powers, storage_charge_min_powers)]
+
 # dsm_range = [-1, 1]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 # imposed_productions_names = []
 # imposed_productions_max_powers = [0]  # Production that cannot be adjusted (e.g. renewables)
 # forbidden_combinations = []
+"""
 
 # ---------------------------------------------------
 # FRENCH NUCLEAR PLANTS SCENARIO (FOR THE INTERNSHIP)
 # ---------------------------------------------------
-
+"""
 # tasks = ["Distribution"]
 # approaches = ["Operational"]
 # piloted_productions_unit_names = ["EEU-1", "EEU-2", "EEU-3"]
@@ -726,6 +800,7 @@ forbidden_combinations = [["Discharge-1", "Charge-1"]]
 # storage_units_power_steps = [[200]]
 # storage_discharge_unit_names = ["Discharge-1"]
 # storage_discharge_max_powers = [200]  # Same data as above, but for storage discharge
+
 # storage_discharge_min_powers = [200]
 # storage_discharge_power_steps = [200/(max(1, mx-mn)) for mx, mn in zip(storage_discharge_max_powers, storage_discharge_min_powers)]
 # storage_charge_unit_names = ["Charge-1"]
@@ -736,17 +811,18 @@ forbidden_combinations = [["Discharge-1", "Charge-1"]]
 # imposed_productions_names = []
 # imposed_productions_max_powers = [0]  # Production that cannot be adjusted (e.g. renewables)
 # forbidden_combinations = [["Discharge-1", "Charge-1"]]
-
+"""
 power_ranges_prod_diss = piloted_productions_power_ranges + dissipation_power_ranges
 power_ranges_all_units_list = power_ranges_prod_diss + storage_units_power_ranges
-
-assess_flexibility(task=tasks, approach=approaches, demand=p_demand,
-                   p_step_productions=piloted_productions_power_steps, p_max_discharges=storage_discharge_max_powers, p_min_discharges=storage_discharge_min_powers,
-                   p_step_discharges=storage_discharge_power_steps, p_max_charges=storage_charge_max_powers, p_min_charges=storage_charge_min_powers,
-                   p_step_charges=storage_charge_power_steps, p_step_dissipation=dissipation_power_steps,
-                   p_max_imposed=imposed_productions_max_powers, forbid_combi_user=forbidden_combinations,
-                   prod_names=piloted_productions_unit_names, discharge_names=storage_discharge_unit_names,
-                   charge_names=storage_charge_unit_names, dissip_names=dissipation_unit_names, flexi_dsm=dsm_range,
-                   p_ranges_prods=piloted_productions_power_ranges,
-                   p_ranges_diss=dissipation_power_ranges, p_ranges_storages=storage_units_power_ranges,
-                   multipurpose_step=gcd_step)
+# fixme
+if True:
+    assess_flexibility(task=tasks, approach=approaches, demand=p_demand,
+                       p_step_productions=piloted_productions_power_steps, p_max_discharges=storage_discharge_max_powers, p_min_discharges=storage_discharge_min_powers,
+                       p_step_discharges=storage_discharge_power_steps, p_max_charges=storage_charge_max_powers, p_min_charges=storage_charge_min_powers,
+                       p_step_charges=storage_charge_power_steps, p_step_dissipation=dissipation_power_steps,
+                       p_max_imposed=imposed_productions_max_powers, forbid_combi_user=forbidden_combinations,
+                       prod_names=piloted_productions_unit_names, discharge_names=storage_discharge_unit_names,
+                       charge_names=storage_charge_unit_names, dissip_names=dissipation_unit_names, flexi_dsm=dsm_range,
+                       p_ranges_prods=piloted_productions_power_ranges,
+                       p_ranges_diss=dissipation_power_ranges, p_ranges_storages=storage_units_power_ranges,
+                       multipurpose_step=gcd_step)
