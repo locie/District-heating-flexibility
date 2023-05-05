@@ -23,13 +23,27 @@ import warnings
 # same names must be use for same instances
 def assess_flexibility(task, 
                        approach, 
-                       demand, p_ranges_prods: list = None, p_step_productions: list = None,
-                       p_ranges_storages: list = None, p_max_discharges: list = None, p_min_discharges: list = None,
-                       p_step_discharges: list = None, p_max_charges: list = None, p_min_charges: list = None,
-                       p_step_charges: list = None, p_ranges_diss: list = None, p_step_dissipation: list = None,
-                       p_max_imposed=None, flexi_dsm: list = None, forbid_combi_user: list = None,
-                       prod_names: list = None, discharge_names: list = None, charge_names: list = None,
-                       dissip_names: list = None, prod_ranges=None, multipurpose_step: int = None):
+                       demand, 
+                       p_ranges_prods: list = None, 
+                       p_step_productions: list = None,
+                       p_ranges_storages: list = None,
+                       p_max_discharges: list = None, 
+                       p_min_discharges: list = None,
+                       p_step_discharges: list = None,
+                       p_max_charges: list = None, 
+                       p_min_charges: list = None,
+                       p_step_charges: list = None, 
+                       p_ranges_diss: list = None, 
+                       p_step_dissipation: list = None,
+                       p_max_imposed=None, 
+                       flexi_dsm: list = None, 
+                       forbid_combi_user: list = None,
+                       prod_names: list = None, 
+                       discharge_names: list = None, 
+                       charge_names: list = None,
+                       dissip_names: list = None, 
+                       prod_ranges=None, 
+                       multipurpose_step: int = None):
     tracemalloc.start()  # Track memory allocation
     tic_overall = time.time()  # Initialize clock
 
