@@ -47,6 +47,8 @@ def assess_flexibility(task,
     tracemalloc.start()  # Track memory allocation
     tic_overall = time.time()  # Initialize clock
 
+    print("\n")
+
     print("  ")
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     print("~~~ WELCOME TO THE FLEXIBILITY WIZARD ~~~")
@@ -210,7 +212,9 @@ def assess_flexibility(task,
 def build_demand_dictionary(max_range, 
                             min_range, 
                             step):
+    
     """ The demand dictionary counts how many time steps feature each power tranche in the demand profile. """
+    print("\n")
 
     # min_range = max(max(dict_struct_ranges.values()))  # Initialize network min thermal power
     # max_range = 0  # Initialize network max thermal power
@@ -287,9 +291,12 @@ def build_demand_dictionary(max_range,
 def structural_flexibility_distribution(dict_demand, p_range_all_units):
     """ This method scans every possible combination of energy units and their input/output powers, determines the
      network's net power for every combination, and records the demand tranches covered by each combination. """
-    print(">> Determining structural flexibility distribution through new method.")
-    print("The list of power ranges is: {}".format(p_range_all_units))
-    print("And it is being compared against the following demand: {}".format(dict_demand))
+     
+    print("\n")
+     
+    #print(">> Determining structural flexibility distribution through new method.")
+    #print("The list of power ranges is: {}".format(p_range_all_units))
+    #print("And it is being compared against the following demand: {}".format(dict_demand))
 
     # fixme: useless with fromkeys. Use dict_demand instead
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
@@ -301,7 +308,7 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
             """
             review notes: for an increasing number of units, determines the min total power and max total power
             """
-            print(">> Analyzing structural combinations of {} unit(s) against demand = {}.".format(pick, demand))
+            #print(">>  of {} unit(s) against demand = {}.".format(pick, demand))
 
             # Checking whether the demand escapes the combinations with minimal or maximal combined powers
             # fixme: probably useless copy
@@ -313,8 +320,8 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
             [x.sort(reverse=True) for x in choose_from]
             highest_possible_power = sum([x[0] for x in heapq.nlargest(pick, choose_from)])
             if demand < lowest_possible_power or demand > highest_possible_power:
-                print(">> No configuration of {} unit(s) can cover a demand of {}.".format(pick, demand))
-                print(">> Skipping configurations of {} unit(s)".format(pick))
+                #print(">> No configuration of {} unit(s) can cover a demand of {}.".format(pick, demand))
+                #print(">> Skipping configurations of {} unit(s)".format(pick))
                 continue
             if pick <= len(p_range_all_units)/2:
                 symmetry = False
@@ -363,7 +370,7 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
                         #     dict_struc_flexi[net_power] += 1  # Structural flexibility only increases by 1 for each combination
                         #     demand_not_covered.remove(net_power)  # That demand is covered at least once
                     # print("Finished analyzing this structural combination: {}".format(structural_combination))
-    print("Structural flexibility distribution: {}".format(list(dict_struc_flexi.values())))
+    #print("Structural flexibility distribution: {}".format(list(dict_struc_flexi.values())))
     return dict_struc_flexi
 
 
@@ -372,9 +379,11 @@ def operational_flexibility_distribution(dict_demand,
                                          operating_ranges_list, 
                                          p_step_productions):
     
-    print(">> Started computing the operational flexibility distribution.")
-    print(">> The demand dictionary is: {}".format(dict_demand))
-    print(">> The list of operating ranges is: {}".format(operating_ranges_list))
+    print("\n")
+    
+    #print(">> Started computing the operational flexibility distribution.")
+    #print(">> The demand dictionary is: {}".format(dict_demand))
+    #print(">> The list of operating ranges is: {}".format(operating_ranges_list))
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
     # fixme: see dict.fromkeys
     dict_oper_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize operational flexibility dictionary
@@ -407,9 +416,9 @@ def operational_flexibility_distribution(dict_demand,
     operational_combinations = 1
     for item in p_ranges_with_zeros:
         operational_combinations *= len(item)
-    print(">> The list of units and operating ranges considered are: {}".format(p_ranges_with_zeros))
-    print(">> There are a total of {} operational combinations to be scanned.".format(operational_combinations))
-    print("Starting calculations...")
+    #print(">> The list of units and operating ranges considered are: {}".format(p_ranges_with_zeros))
+    #print(">> There are a total of {} operational combinations to be scanned.".format(operational_combinations))
+    #print("Starting calculations...")
     progress_check = 0.01  # Check progress every 1%
     milestone = progress_check  # First milestone to be printed
     # b = len([i for i in itertools.product(*a) if sum(i) == 5])
@@ -467,6 +476,9 @@ def operational_flexibility_distribution(dict_demand,
 def both_flexibility_distributions(dict_demand, p_range_all_units):
     """ This method scans every possible combination of energy units and their input/output powers, determines the
      network's net power for every combination, and records the demand tranches covered by each combination. """
+     
+    print("\n")
+     
     print(">> Determining flexibility distributions through the new method.")
     print("The list of power ranges is: {}".format(p_range_all_units))
     print("And it is being compared against the following demand: {}".format(dict_demand))
@@ -501,6 +513,9 @@ def both_flexibility_distributions(dict_demand, p_range_all_units):
 
 def assess_dsm_effects(demand_range: list = None, target_distribution: list = None, flexi_dsm: list = None,
                        default_label: str = 'With DSM', dsm_step=1):
+    
+    print("\n")
+    
     # TODO: This function understands the DSM range as demand steps that one can displace over a flexibility
     #  distribution, but the rest of the functions, especially the one that builds the demand dictionary, understands
     #  the DSM range as power. Huge mismatch in the utilization of input data, that can easily break the program. Solve.
@@ -567,6 +582,8 @@ def plot_flexibility_distribution(approach,
                                   flexi_dist_dissip: list = None,
                                   demand_dict: dict = None, 
                                   plotting_step: int = 1):
+    
+    print("\n")
     
     print(">> Started plotting {} flexibility distribution with the following lists of units:". format(approach))
     print("Production units: {}".format(flexi_dist_prod is not None))
@@ -658,6 +675,8 @@ def assess_effective_flexibility(dict_struct_ranges,
     
     """ This method redistributes the demand among the possible configurations of the network. That leads to each
     configuration having a certain frequency (or probability) of existing due to the demand profile. """
+    
+    print("\n")
 
     # DETERMINE PROBABILITY DISTRIBUTION FOR THE NETWORK'S STRUCTURAL STATES
     dict_op_occurrences = dict()
