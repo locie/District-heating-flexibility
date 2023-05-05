@@ -810,7 +810,7 @@ dissipation_power_steps = [1]  # Relative power steps
 storage_units_names = ["S-01"]
 storage_units_power_ranges = [[-1, 1]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
 storage_units_power_steps = [[1]]
-
+"""
 storage_discharge_unit_names = ["Discharge-1"]
 storage_discharge_max_powers = [1]  # Same data as above, but for storage discharge
 storage_discharge_min_powers = [1]
@@ -820,7 +820,7 @@ storage_charge_unit_names = ["Charge-1"]
 storage_charge_max_powers = [-1]  # Same as above, but for storage charge
 storage_charge_min_powers = [-1]
 storage_charge_power_steps = [1/(max(1, mx-mn)) for mx, mn in zip(storage_charge_max_powers, storage_charge_min_powers)]
-
+"""
 dsm_range = [-1, 1]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 
 imposed_productions_names = []
