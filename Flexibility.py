@@ -21,7 +21,9 @@ import warnings
 # general fixme:
 # consider the use of numpy arrays
 # same names must be use for same instances
-def assess_flexibility(task, approach, demand, p_ranges_prods: list = None, p_step_productions: list = None,
+def assess_flexibility(task, 
+                       approach, 
+                       demand, p_ranges_prods: list = None, p_step_productions: list = None,
                        p_ranges_storages: list = None, p_max_discharges: list = None, p_min_discharges: list = None,
                        p_step_discharges: list = None, p_max_charges: list = None, p_min_charges: list = None,
                        p_step_charges: list = None, p_ranges_diss: list = None, p_step_dissipation: list = None,
