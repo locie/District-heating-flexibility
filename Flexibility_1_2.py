@@ -102,13 +102,14 @@ def assess_flexibility(task,
                 flexi_dist_prod = list(dict_struc_flexi.values())
             elif a == "Operational":
                 # flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units, p_step_productions)
-                flexi_dist_all = operational_flexibility_distribution(demand_dict, 
-                                                                      p_ranges_all_units,
-                                                                      p_step_productions+p_step_dissipation+p_step_discharges)
+                flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units, p_step_productions + p_step_dissipation + p_step_discharges)
+                
                 # flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions)
-                flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss,
-                                                                         p_step_productions+p_step_dissipation)
+                
+                flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions + p_step_dissipation)
+                
                 flexi_dist_prod = operational_flexibility_distribution(demand_dict, p_ranges_prods, p_step_productions)
+                
             elif a == "Both":
                 dict_struc_flexi, dict_oper_flexi = both_flexibility_distributions(demand_dict, p_ranges_all_units)
                 flexi_dist_all = list(dict_oper_flexi.values())

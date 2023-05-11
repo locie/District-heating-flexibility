@@ -4,6 +4,19 @@ Created on Wed May 10 11:36:51 2023
 
 @author: blanchoy
 """
+import bisect
+import copy
+import heapq
+import itertools
+import math
+import matplotlib.pyplot as plt
+plt.plot(), plt.close()
+import numpy as np
+import os
+from functools import reduce
+import time
+import tracemalloc
+import warnings
 
 import Flexibility_1_2
 
@@ -18,15 +31,15 @@ p_demand = 1
 # ILLUSTRATIVE SCENARIO
 # ---------------------
 
-tasks = ["Distribution", "Distribution"]
-approaches = ["Structural", "Operational"]    # "Structural", "Operational" or "Both"
+tasks = ["Distribution"]
+approaches = ["Structural"]    # "Structural", "Operational" or "Both"
 # tasks = ["Distribution"]
 # approaches = ["Both"]
 
 Demand_file_name = None #"demand_file_adjusted_v3.txt"    # None or "file name"
 
 piloted_productions_unit_names = ["P-01", "P-02", "P-03"]  # List your units' names
-piloted_productions_power_ranges = [[2, 3], [3, 4], [14, 15]]  #max-min for each unit
+piloted_productions_power_ranges = [[2, 3], [3, 4], [14, 16]]  #max-min for each unit
 piloted_productions_power_steps = [1, 1, 1]  # Relative power steps
 
 gcd_step = 1
