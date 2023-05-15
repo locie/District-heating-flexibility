@@ -36,7 +36,7 @@ approaches = ["Structural"]    # "Structural", "Operational" or "Both"
 # tasks = ["Distribution"]
 # approaches = ["Both"]
 
-Demand_file_name = None #"demand_file_adjusted_v3.txt"    # None or "file name"
+Demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
 
 piloted_productions_unit_names = ["P-01", "P-02", "P-03"]  # List your units' names
 piloted_productions_power_ranges = [[2, 3], [3, 4], [14, 16]]  #max-min for each unit
