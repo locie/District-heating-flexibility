@@ -25,7 +25,7 @@ import Flexibility_1_2
 p_demand = 1
 
 tasks = ["Distribution"]
-approaches = ["Structural"]
+approaches = ["Structural"]   #   Operational   or Structural
 
 Demand_file_name = None #"demand_file_adjusted_v3.txt"    # None or "file name"
 
@@ -35,7 +35,7 @@ piloted_productions_power_steps = [180, 260, 300]  # Relative power steps
 
 prod_absolute_steps = [int((max(i) - min(i)) * j) for i, j in zip(piloted_productions_power_ranges, piloted_productions_power_steps)]
 
-gcd_step = 20#int(reduce(math.gcd, prod_absolute_steps))
+gcd_step = int(reduce(math.gcd, prod_absolute_steps))
 
 Flexibility_1_2.debug_print(prod_absolute_steps, "prod_absolute_steps")
 Flexibility_1_2.debug_print(gcd_step, "gcd_step")

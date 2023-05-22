@@ -4,21 +4,9 @@ Created on Wed May 10 11:36:51 2023
 
 @author: blanchoy
 """
-import bisect
-import copy
-import heapq
-import itertools
-import math
-import matplotlib.pyplot as plt
-plt.plot(), plt.close()
-import numpy as np
-import os
-from functools import reduce
-import time
-import tracemalloc
-import warnings
 
-import Flexibility_1_2
+
+from Flexibility_1_2 import *
 
 
 p_demand = 1
@@ -32,15 +20,15 @@ p_demand = 1
 # ---------------------
 
 tasks = ["Distribution"]
-approaches = ["Structural"]    # "Structural", "Operational" or "Both"
+approaches = ["Operational"]    # "*-", "Operational" or "Both"
 # tasks = ["Distribution"]
 # approaches = ["Both"]
 
-Demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
+Demand_file_name = "demand_file_ad justed_v3.txt"    # None or "file name"
 
-piloted_productions_unit_names = ["P-01", "P-02", "P-03"]  # List your units' names
-piloted_productions_power_ranges = [[2, 3], [3, 4], [14, 16]]  #max-min for each unit
-piloted_productions_power_steps = [1, 1, 1]  # Relative power steps
+piloted_productions_unit_names = ["P-01", "P-02"]  # List your units' names
+piloted_productions_power_ranges = [[2, 3],  [14, 16]] #  =============================== plus de step mais liste des puissance ========================  max-min for each unit  
+piloted_productions_power_steps = [1, 2]  # Relative power steps
 
 gcd_step = 1
 
@@ -80,7 +68,7 @@ if __name__ == '__main__':
     power_ranges_all_units_list = power_ranges_prod_diss + storage_units_power_ranges
     # fixme
     if True:
-       Flexibility_1_2.assess_flexibility(task = tasks, 
+       assess_flexibility(task = tasks, 
                                           approach = approaches, 
                                           demand = p_demand,
                                           p_step_productions = piloted_productions_power_steps, 

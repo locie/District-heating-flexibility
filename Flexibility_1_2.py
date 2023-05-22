@@ -342,10 +342,12 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
             # 1) since time complexity related to the number of subsets (same for both pick and n-pick elements-per-subset)
             # 2) other kinds of symmetry might be hardcoded in itertools
             for structural_combination in itertools.combinations(p_range_all_units, pick):  # Scan every unit combination
+                print("The inverse structural combination is: {}".format(structural_combination))
+                print("The pick is: {}".format(pick))
                 if symmetry is True:
                     inverse_choice = copy.deepcopy(p_range_all_units)
                     for p in structural_combination:
-                        # print("The inverse structural combination is: {}".format(structural_combination))
+                        #print("The inverse structural combination is: {}".format(structural_combination))
                         # print("Removing this unit: {} from this list: {}".format(p, inverse_choice))
                         inverse_choice.remove(p)
                         # print("Inverse choice list after removal: {}".format(inverse_choice))
