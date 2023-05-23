@@ -21,66 +21,55 @@ import warnings
 # general fixme:
 # consider the use of numpy arrays
 # same names must be use for same instances
-def assess_flexibility(task, 
-                       approach, 
-                       demand, 
-                       p_ranges_prods: list = None, 
+def assess_flexibility(task,
+                       approach,
+                       demand,
+                       p_ranges_prods: list = None,
                        p_step_productions: list = None,
-                       p_ranges_storages: list = None, 
-                       p_max_discharges: list = None, 
-                       p_min_discharges: list = None,
-                       p_step_discharges: list = None, 
-                       p_max_charges: list = None, 
-                       p_min_charges: list = None,
-                       p_step_charges: list = None, 
-                       p_ranges_diss: list = None, 
+                       p_ranges_storages: list = None,
+                       p_step_storages: list = None,
+                       p_ranges_diss: list = None,
                        p_step_dissipation: list = None,
-                       p_max_imposed=None, 
-                       flexi_dsm: list = None, 
+                       p_max_imposed=None,
+                       flexi_dsm: list = None,
                        forbid_combi_user: list = None,
-                       prod_names: list = None, 
-                       discharge_names: list = None, 
-                       charge_names: list = None,
-                       dissip_names: list = None, 
-                       prod_ranges=None, 
+                       prod_names: list = None,
+                       dissip_names: list = None,
                        multipurpose_step: int = None,
-                       Demand_file_name = None):
+                       demand_file_name=None):
     tracemalloc.start()  # Track memory allocation
     tic_overall = time.time()  # Initialize clock
 
     print("\n")
 
     print("  ")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("~~~ WELCOME TO THE FLEXIBILITY WIZARD ~~~")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("~~~ WELCOME TO FLEXTROPY ~~~")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
     p_max_productions = [max(p) for p in p_ranges_prods]
     p_min_productions = [min(p) for p in p_ranges_prods]
     p_max_dissipation = [min(p) for p in p_ranges_diss]  # The most negative dissipation power
     p_min_dissipation = [max(p) for p in p_ranges_diss]  # The least negative dissipation power
-    # TODO: Manage to model storage as one unit but with minimal charge and discharge powers?
-    # p_max_discharges_2 = [max(p) for p in p_ranges_storages]
-    # p_min_discharges_2 = [min(p) for p in p_ranges_storages]
-    # debug_print(p_max_discharges, "p_max_discharges")
-    # debug_print(p_max_discharges_2, "p_max_discharges_2")
-    # debug_print(p_min_discharges, "p_min_discharges")
-    # debug_print(p_min_discharges_2, "p_min_discharges_2")
 
     p_ranges_prod_diss = p_ranges_prods + p_ranges_diss
     p_ranges_all_units = p_ranges_prods + p_ranges_diss + p_ranges_storages
 
     # BUILD DEMAND DICTIONARY
-    max_demand = sum(p for p in p_max_productions if p > 0) + sum(p_max_discharges) + sum(p_max_imposed) \
+
+    max_storage_discharge = max(0, sum(map(max, p_ranges_storages)))  # Max power supply through storage discharge
+    max_storage_charge = min(0, sum(map(min, p_ranges_storages)))  # Max power that can be stored at once
+
+    max_demand = sum(p for p in p_max_productions if p > 0) + max_storage_discharge + sum(p_max_imposed) \
                  + max(min(flexi_dsm), -min(flexi_dsm))    # fixme: min is evaluated twice, max(x, -x) is abs
-    min_demand = sum(p for p in p_min_productions if p < 0) + sum(p_max_charges) + sum(p_max_dissipation) \
+    min_demand = sum(p for p in p_min_productions if p < 0) + max_storage_charge + sum(p_max_dissipation) \
                  - max(0, max(flexi_dsm))
     # else:
     #     max_demand = sum(p for p in p_max_productions if p > 0) + sum(p_max_imposed)
     #     min_demand = sum(p for p in p_min_productions if p < 0)
     #debug_print(min_demand, "Min power for demand dictionary")
     #debug_print(max_demand, "Max power for demand dictionary")
-    demand_dict = build_demand_dictionary(max_range=max_demand, min_range=min_demand, step=multipurpose_step, demand_file_name = Demand_file_name)
+    demand_dict = build_demand_dictionary(max_range=max_demand, min_range=min_demand, step=multipurpose_step, demand_file_name = demand_file_name)
     # demand_dict = build_demand_dictionary(dictionary_struct_ranges, dsm_range, imposed_productions_max_powers)
     demand_range = list(demand_dict.keys())
     #debug_print(demand_range, "demand_range")
@@ -102,14 +91,14 @@ def assess_flexibility(task,
                 flexi_dist_prod = list(dict_struc_flexi.values())
             elif a == "Operational":
                 # flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units, p_step_productions)
-                flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units, p_step_productions + p_step_dissipation + p_step_discharges)
-                
+                flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units,
+                                                                      p_step_productions + p_step_dissipation + p_step_storages)
+
                 # flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions)
-                
                 flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions + p_step_dissipation)
-                
+
                 flexi_dist_prod = operational_flexibility_distribution(demand_dict, p_ranges_prods, p_step_productions)
-                
+
             elif a == "Both":
                 dict_struc_flexi, dict_oper_flexi = both_flexibility_distributions(demand_dict, p_ranges_all_units)
                 flexi_dist_all = list(dict_oper_flexi.values())
@@ -124,11 +113,11 @@ def assess_flexibility(task,
                 raise ValueError("Sorry, the approach requested was not recognized: {}. It must be either Structural"
                                  "or Operational".format(a))
             plot_flexibility_distribution(a, demand_range, flexi_dist_all=flexi_dist_all, flexi_dsm=flexi_dsm,
-                                          demand_dict=demand_dict, plotting_step=multipurpose_step , Demand_file_name =Demand_file_name)
+                                          demand_dict=demand_dict, plotting_step=multipurpose_step, Demand_file_name =demand_file_name)
             plot_flexibility_distribution(a, demand_range, flexi_dist_dissip=flexi_dist_dissip, flexi_dsm=flexi_dsm,
-                                          demand_dict=demand_dict, plotting_step=multipurpose_step , Demand_file_name =Demand_file_name)
+                                          demand_dict=demand_dict, plotting_step=multipurpose_step, Demand_file_name =demand_file_name)
             plot_flexibility_distribution(a, demand_range, flexi_dist_prod=flexi_dist_prod, flexi_dsm=flexi_dsm,
-                                          demand_dict=demand_dict, plotting_step=multipurpose_step , Demand_file_name =Demand_file_name)
+                                          demand_dict=demand_dict, plotting_step=multipurpose_step, Demand_file_name =demand_file_name)
 
 
 
@@ -156,16 +145,16 @@ def assess_flexibility(task,
                 flexi_by_storage = []
             # print("flexi_by_storage = {}".format(flexi_by_storage))  # For debug
 
-            plot_flexibility_distribution(a, 
-                                          demand_range, 
+            plot_flexibility_distribution(a,
+                                          demand_range,
                                           flexi_dist_all = flexi_dist_all,
-                                          flexi_dist_prod = flexi_dist_prod, 
+                                          flexi_dist_prod = flexi_dist_prod,
                                           flexi_by_storage = flexi_by_storage,
-                                          flexi_by_dissipation = flexi_by_dissipation, 
+                                          flexi_by_dissipation = flexi_by_dissipation,
                                           flexi_dsm = flexi_dsm,
-                                          demand_dict = demand_dict, 
+                                          demand_dict = demand_dict,
                                           plotting_step = multipurpose_step,
-                                          Demand_file_name =Demand_file_name)
+                                          Demand_file_name =demand_file_name)
 
             # debug_print(flexi_dist_prod, "flexi_dist_prod")
             # fig, ax = plt.subplots()
@@ -208,9 +197,9 @@ def assess_flexibility(task,
 
     plt.show()
     print("  ")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print("~~~ PROCESS HAS FINISHED. THANK YOU FOR USING THE FLEXIBILITY WIZARD ~~~")
-    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("~~~ PROCESS HAS FINISHED. THANK YOU FOR USING FLEXTROPY ~~~")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
 
 # def build_demand_dictionary(dict_struct_ranges, range_dsm, imposed_prod):

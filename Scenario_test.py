@@ -20,46 +20,29 @@ p_demand = 1
 # ---------------------
 
 tasks = ["Distribution"]
-approaches = ["Operational"]    # "*-", "Operational" or "Both"
-# tasks = ["Distribution"]
-# approaches = ["Both"]
+approaches = ["Operational"]    # "Structural", "Operational" or "Both"
 
-Demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
+demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
 
 piloted_productions_unit_names = ["P-01", "P-02"]  # List your units' names
 piloted_productions_power_ranges = [[2, 3],  [14, 16]] #  =============================== plus de step mais liste des puissance ========================  max-min for each unit  
 piloted_productions_power_steps = [1, 2]  # Relative power steps
 
-gcd_step = 1
-
 dissipation_unit_names = ["D-01"]
 dissipation_power_ranges = [[-1]]  # Do not include the zero, it is done automatically
 dissipation_power_steps = [1]  # Relative power steps
 
-storage_units_names = ["S-01"]
-storage_units_power_ranges = [[-1, 1]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
-storage_units_power_steps = [[1]]
-
-storage_discharge_unit_names = ["Discharge-1"]
-storage_discharge_max_powers = [1]  # Same data as above, but for storage discharge
-storage_discharge_min_powers = [1]
-storage_discharge_power_steps = [1/(max(1, mx-mn)) for mx, mn in zip(storage_discharge_max_powers, storage_discharge_min_powers)]
-
-storage_charge_unit_names = ["Charge-1"]
-storage_charge_max_powers = [-1]  # Same as above, but for storage charge
-storage_charge_min_powers = [-1]
-storage_charge_power_steps = [1/(max(1, mx-mn)) for mx, mn in zip(storage_charge_max_powers, storage_charge_min_powers)]
+storage_units_names = ["S-01", "S-02"]
+storage_units_power_ranges = [[-1, 1], [-2, 3]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
+storage_units_power_steps = [1, 1]
 
 dsm_range = [-1, 1]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 
 imposed_productions_names = ["IP-1"]
 imposed_productions_max_powers = []  # Production that cannot be adjusted (e.g. renewables)
 
+gcd_step = 1
 forbidden_combinations = [["Discharge-1", "Charge-1"]]
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -71,23 +54,16 @@ if __name__ == '__main__':
        assess_flexibility(task = tasks, 
                                           approach = approaches, 
                                           demand = p_demand,
-                                          p_step_productions = piloted_productions_power_steps, 
-                                          p_max_discharges = storage_discharge_max_powers, 
-                                          p_min_discharges = storage_discharge_min_powers,
-                                          p_step_discharges = storage_discharge_power_steps, 
-                                          p_max_charges = storage_charge_max_powers, 
-                                          p_min_charges = storage_charge_min_powers,
-                                          p_step_charges = storage_charge_power_steps, 
+                                          p_step_productions = piloted_productions_power_steps,
                                           p_step_dissipation = dissipation_power_steps,
                                           p_max_imposed = imposed_productions_max_powers, 
                                           forbid_combi_user = forbidden_combinations,
-                                          prod_names = piloted_productions_unit_names, 
-                                          discharge_names = storage_discharge_unit_names,
-                                          charge_names = storage_charge_unit_names, 
+                                          prod_names = piloted_productions_unit_names,
                                           dissip_names = dissipation_unit_names, 
                                           flexi_dsm = dsm_range,
                                           p_ranges_prods = piloted_productions_power_ranges,
                                           p_ranges_diss = dissipation_power_ranges,  
                                           p_ranges_storages = storage_units_power_ranges,
+                                          p_step_storages = storage_units_power_steps,
                                           multipurpose_step = gcd_step,
-                                          Demand_file_name = Demand_file_name)
+                                          demand_file_name = demand_file_name)
