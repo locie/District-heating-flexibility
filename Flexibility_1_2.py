@@ -80,7 +80,7 @@ def assess_flexibility(task,
     #     min_demand = sum(p for p in p_min_productions if p < 0)
     #debug_print(min_demand, "Min power for demand dictionary")
     #debug_print(max_demand, "Max power for demand dictionary")
-    demand_dict = build_demand_dictionary(max_range=max_demand, min_range=min_demand, step=multipurpose_step , Demand_file_name = Demand_file_name)
+    demand_dict = build_demand_dictionary(max_range=max_demand, min_range=min_demand, step=multipurpose_step, demand_file_name = Demand_file_name)
     # demand_dict = build_demand_dictionary(dictionary_struct_ranges, dsm_range, imposed_productions_max_powers)
     demand_range = list(demand_dict.keys())
     #debug_print(demand_range, "demand_range")
@@ -217,7 +217,7 @@ def assess_flexibility(task,
 def build_demand_dictionary(max_range, 
                             min_range, 
                             step,
-                            Demand_file_name) :
+                            demand_file_name) :
     
     """ The demand dictionary counts how many time steps feature each power tranche in the demand profile. """
     print("\n")
@@ -251,39 +251,29 @@ def build_demand_dictionary(max_range,
     # fixme: see dict.fromkeys method
     dict_demand_load = dict(zip(demand_dict_keys, demand_dict_init_values))  # Initialize demand load dictionary
 
-
     # GENERATE LIST OF DEMAND INSTANCES FROM DEMAND FILE
+
     # fixme: use pathlib
     work_path = os.getcwd()
-    # demand_file = open(work_path + "/demand_file.txt", "r")
     # fixme
     # demand_file = [(27+33)/2 + ((33-27)/2) * math.sin(2*k + (k**2)%3) for k in range(200)] #open(work_path + "/demand_file_illustrative_case.txt", "r")
-    if Demand_file_name != None:
-        demand_file = open(work_path + "/"+ Demand_file_name , "r")
-        # fixme: list(map[...])
-        demand_series = [c for c in map(float, demand_file)]
-        # fixme: prefer Numpy conditionnal extraction.
+    if demand_file_name is not None:
+        demand_file = open(work_path + "/" + demand_file_name, "r")
+        demand_series = list(map(float, demand_file))
+        # fixme: prefer Numpy conditional extraction.
         for d in demand_series[:]:  # This loop removes any demand over the network's maximal power, and warns the user.
-            if d > max_range:
-                warnings.warn(
-                    "Warning: Your demand file contains a demand ({}) that exceeds the network's maximal power output"
-                    " ({}). It was removed from the demand list.".format(d, max_range))
-                demand_series.remove(d)
-        # debug_print(dict_demand_load, "dict_demand_load")  # For debug
-        # debug_print(demand_series, "demand_series")  # For debug
-    
-        # fixme: unsure of the role of these lines
-        # 'key1 < d <= key2' instead of 'd in dict_demand_load.keys()'?
-        for d in demand_series:
-            if d in dict_demand_load.keys():
-                dict_demand_load[d] += 1
-            else:
-                dict_demand_load[d] = 1  # TODO: If demand not in dictionary, not add it and warn the user
-
-
-    #debug_print(dict_demand_load, "dict_demand_load")  # For debug
-
-    # demand_file.close() # fixme
+            if d in dict_demand_load.keys():  # The demanded power exists in the dictionary already
+                dict_demand_load[d] += 1  # The demand frequency of that power increases by one
+            elif d > max_range or d < min_range:  # The demanded power falls out of the network's range
+                warnings.warn("A demand ({}) outside of network range ({}, {}) was ignored.".format(d, min_range, max_range))  # Notify the user
+                demand_series.remove(d)  # Remove demand from data
+            else:  # Demand is within the network's range but does not respect the power step (gcd)
+                closest_key = min(dict_demand_load.keys(), key=lambda x: abs(x - d))  # Spot the nearest demand in dict
+                if closest_key < d:
+                    closest_key += step  # Rounding up to ensure the network satisfies the demand
+                warnings.warn("A demand of ({}) was rounded up to ({}) for coherence.".format(d, closest_key))  # Notify the user
+                dict_demand_load[closest_key] += 1
+        demand_file.close()
 
     # PLOT DEMAND LOAD DISTRIBUTION (Outdated since demand is plotted together with flexibility distributions)
     # fig, ax = plt.subplots()
@@ -658,6 +648,9 @@ def plot_flexibility_distribution(approach,
         #debug_print(demand_dict.values(), "demand dict values")  # For debug
         # fixme: .values() is useless
         #debug_print(len(demand_dict.values()), "length demand dict values")  # For debug
+        debug_print(demand_range, "demand_range")
+        debug_print(demand_dict, "demand_dict")
+        debug_print(demand_dict.values(), "demand_dict.values()")
         ax2.plot(demand_range, demand_dict.values(), color='b')
         ax2.grid(False)  # turn off grid #2
         ax2.set_ylabel('Demand frequency (time steps)', weight='bold')
