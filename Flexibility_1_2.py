@@ -323,6 +323,7 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
             for structural_combination in itertools.combinations(p_range_all_units, pick):  # Scan every unit combination
                 print("The inverse structural combination is: {}".format(structural_combination))
                 print("The pick is: {}".format(pick))
+                print("The demand is: {}".format(demand))
                 if symmetry is True:
                     inverse_choice = copy.deepcopy(p_range_all_units)
                     for p in structural_combination:

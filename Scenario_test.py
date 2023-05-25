@@ -20,28 +20,28 @@ p_demand = 1
 # ---------------------
 
 tasks = ["Distribution"]
-approaches = ["Operational"]    # "Structural", "Operational" or "Both"
+approaches = ["Structural"]    # "Structural", "Operational" or "Both"
 
 demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
 
-piloted_productions_unit_names = ["P-01", "P-02"]  # List your units' names
-piloted_productions_power_ranges = [[2, 3],  [14, 16]] #  =============================== plus de step mais liste des puissance ========================  max-min for each unit  
-piloted_productions_power_steps = [1, 2]  # Relative power steps
+piloted_productions_unit_names = ["P1_1", "P1_2" , "P1_3" , "P2_1", "P2_1" ,"P3_1" ]  # List your units' names
+piloted_productions_power_ranges = [[900*0.2, 900],  [900*0.2, 900] , [900*0.2, 900] , [1300*0.2, 1300] , [1300*0.2, 1300] , [1450*0.2, 1450]] #  =============================== plus de step mais liste des puissance ========================  max-min for each unit  
+piloted_productions_power_steps = [900*0.8, 900*0.8 , 900*0.8 ,1300*0.8 , 1300*0.8, 1450*0.8]  # Relative power steps
 
 dissipation_unit_names = ["D-01"]
-dissipation_power_ranges = [[-1]]  # Do not include the zero, it is done automatically
-dissipation_power_steps = [1]  # Relative power steps
+dissipation_power_ranges = [[-10]]  # Do not include the zero, it is done automatically
+dissipation_power_steps = [10]  # Relative power steps
 
-storage_units_names = ["S-01", "S-02"]
-storage_units_power_ranges = [[-1, 1], [-2, 3]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
-storage_units_power_steps = [1, 1]
+storage_units_names = ["S-01"]
+storage_units_power_ranges = [[-10, 10]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
+storage_units_power_steps = [10, 10]
 
-dsm_range = [-1, 1]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
+dsm_range = [-10, 10]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 
 imposed_productions_names = ["IP-1"]
 imposed_productions_max_powers = []  # Production that cannot be adjusted (e.g. renewables)
 
-gcd_step = 1
+gcd_step = 10
 forbidden_combinations = [["Discharge-1", "Charge-1"]]
 
 
