@@ -7,6 +7,7 @@ Created on Wed May 10 11:36:51 2023
 
 
 from Flexibility_1_2 import *
+import math
 
 
 p_demand = 1
@@ -20,30 +21,31 @@ p_demand = 1
 # ---------------------
 
 tasks = ["Distribution"]
-approaches = ["Operational"]    # "Structural", "Operational" or "Both"
+approaches = ["Operational"]    # "Structural" or "Operational"
 
 demand_file_name = "demand_file_adjusted_v3.txt"    # None or "file name"
 
-piloted_productions_unit_names = ["P-01", "P-02"]  # List your units' names
-piloted_productions_power_ranges = [[2, 3],  [14, 16]] #  =============================== plus de step mais liste des puissance ========================  max-min for each unit  
-piloted_productions_power_steps = [1, 2]  # Relative power steps
+""" Enter below the input data for your equivalent energy units. The list of powers must contain EVERY output power 
+ that the unit can be adjusted to. For example, for a unit operating between 200 MW and 800 MW by steps of 200 MW,
+ the list of powers is: [200, 400, 600, 800]. No need to include the 0 because Flextropy inserts it by default. """
 
-dissipation_unit_names = ["D-01"]
-dissipation_power_ranges = [[-1]]  # Do not include the zero, it is done automatically
-dissipation_power_steps = [1]  # Relative power steps
+piloted_productions_unit_names = ["P-01", "P-02"]  # Units names
+piloted_productions_power_ranges = [[40, 80, 120, 160, 200], [40, 80, 120, 160, 200]]  # EVERY adjustable power
 
-storage_units_names = ["S-01", "S-02"]
-storage_units_power_ranges = [[-1, 1], [-2, 3]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
-storage_units_power_steps = [1, 1]
+dissipation_unit_names = ["D-01"]  # Units names
+dissipation_power_ranges = [[-120, -80, -40]]  # EVERY adjustable power
 
-dsm_range = [-1, 1]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
+storage_units_names = ["S-01", "S-02"]  # Units names
+storage_units_power_ranges = [[-80, 80], [-160, 240]]  # EVERY adjustable power
+
+dsm_range = [0, 0]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 
 imposed_productions_names = ["IP-1"]
 imposed_productions_max_powers = []  # Production that cannot be adjusted (e.g. renewables)
 
-gcd_step = 1
-forbidden_combinations = [["Discharge-1", "Charge-1"]]
+gcd_step = 40  # User must make sure this gcd is coherent with the powers lists declared for all units
 
+forbidden_combinations = [["Discharge-1", "Charge-1"]]
 
 if __name__ == '__main__':
 
@@ -54,8 +56,6 @@ if __name__ == '__main__':
        assess_flexibility(task = tasks, 
                                           approach = approaches, 
                                           demand = p_demand,
-                                          p_step_productions = piloted_productions_power_steps,
-                                          p_step_dissipation = dissipation_power_steps,
                                           p_max_imposed = imposed_productions_max_powers, 
                                           forbid_combi_user = forbidden_combinations,
                                           prod_names = piloted_productions_unit_names,
@@ -64,6 +64,5 @@ if __name__ == '__main__':
                                           p_ranges_prods = piloted_productions_power_ranges,
                                           p_ranges_diss = dissipation_power_ranges,  
                                           p_ranges_storages = storage_units_power_ranges,
-                                          p_step_storages = storage_units_power_steps,
                                           multipurpose_step = gcd_step,
                                           demand_file_name = demand_file_name)

@@ -25,11 +25,8 @@ def assess_flexibility(task,
                        approach,
                        demand,
                        p_ranges_prods: list = None,
-                       p_step_productions: list = None,
                        p_ranges_storages: list = None,
-                       p_step_storages: list = None,
                        p_ranges_diss: list = None,
-                       p_step_dissipation: list = None,
                        p_max_imposed=None,
                        flexi_dsm: list = None,
                        forbid_combi_user: list = None,
@@ -90,15 +87,9 @@ def assess_flexibility(task,
                 dict_struc_flexi = structural_flexibility_distribution(demand_dict, p_ranges_prods)
                 flexi_dist_prod = list(dict_struc_flexi.values())
             elif a == "Operational":
-                # flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units, p_step_productions)
-                flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units,
-                                                                      p_step_productions + p_step_dissipation + p_step_storages)
-
-                # flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions)
-                flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss, p_step_productions + p_step_dissipation)
-
-                flexi_dist_prod = operational_flexibility_distribution(demand_dict, p_ranges_prods, p_step_productions)
-
+                flexi_dist_all = operational_flexibility_distribution(demand_dict, p_ranges_all_units)
+                flexi_dist_dissip = operational_flexibility_distribution(demand_dict, p_ranges_prod_diss)
+                flexi_dist_prod = operational_flexibility_distribution(demand_dict, p_ranges_prods)
             elif a == "Both":
                 dict_struc_flexi, dict_oper_flexi = both_flexibility_distributions(demand_dict, p_ranges_all_units)
                 flexi_dist_all = list(dict_oper_flexi.values())
@@ -321,8 +312,8 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
             # 1) since time complexity related to the number of subsets (same for both pick and n-pick elements-per-subset)
             # 2) other kinds of symmetry might be hardcoded in itertools
             for structural_combination in itertools.combinations(p_range_all_units, pick):  # Scan every unit combination
-                print("The inverse structural combination is: {}".format(structural_combination))
-                print("The pick is: {}".format(pick))
+                # print("The inverse structural combination is: {}".format(structural_combination))
+                # print("The pick is: {}".format(pick))
                 if symmetry is True:
                     inverse_choice = copy.deepcopy(p_range_all_units)
                     for p in structural_combination:
@@ -364,59 +355,41 @@ def structural_flexibility_distribution(dict_demand, p_range_all_units):
     return dict_struc_flexi
 
 
-
 def operational_flexibility_distribution(dict_demand, 
-                                         operating_ranges_list, 
-                                         p_step_productions):
-    
+                                         operating_ranges_list):
+
     print("\n")
-    
-    #print(">> Started computing the operational flexibility distribution.")
-    #print(">> The demand dictionary is: {}".format(dict_demand))
-    #print(">> The list of operating ranges is: {}".format(operating_ranges_list))
+
+    # print(">> Started computing the operational flexibility distribution.")
+    # print(">> The demand dictionary is: {}".format(dict_demand))
+    # print(">> The list of operating ranges is: {}".format(operating_ranges_list))
+
     list_demand = list(dict_demand.keys())  # Extract range of demand from the demand dictionary
     # fixme: see dict.fromkeys
     dict_oper_flexi = dict(zip(list_demand, [0] * len(list_demand)))  # Initialize operational flexibility dictionary
-    # fixme: copy is useless
-    tuple_p_ranges_with_zeros = tuple(copy.deepcopy(operating_ranges_list))  # Create tuple deep copy of unit list
-    #debug_print(tuple_p_ranges_with_zeros, "tuple_p_ranges_with_zeros")
-    #debug_print(p_step_productions, "p_step_productions before append")
     p_ranges_with_zeros = []  # Initialize final list of power ranges with zeros in them
-    # debug_print(tuple_p_ranges_with_zeros, "p_ranges_with_zeros before changes")
-    while len(p_step_productions) < len(tuple_p_ranges_with_zeros):
-        p_step_productions.append(1)
-    #debug_print(p_step_productions, "p_step_productions after append")
-    for x, y in zip(tuple_p_ranges_with_zeros, p_step_productions):
-        # unit = list(copy.deepcopy(x))  # If disregarding operating steps at all
-        # debug_print(x, "before bisect insort")
-        #debug_print(y, "piloting step")
-        min_pow = min(x)
-        max_pow = max(x)
-        #debug_print(min_pow, "min_pow")
-        #debug_print(max_pow, "max_pow")
-        # fixme: 'list' in 'list(np.[...])' is useless
-        # fixme: why 'float'?
-        unit = [round(float(c), 3) for c in list(np.arange(min_pow, max_pow + 0.75 * y, y))]  # TODO: This is assuming a step of 1, generalize for any step
-        # debug_print(unit, "np.arange generated")
+
+    operational_combinations = 1
+    for unit in operating_ranges_list:  # Insert 0 in list of powers and compute max number of operational combinations
         if 0 not in unit:
             bisect.insort(unit, 0)
-        # debug_print(unit, "bisect insort")
         p_ranges_with_zeros.append(unit)
-    # debug_print(p_ranges_with_zeros, "p_ranges_with_zeros")
-    operational_combinations = 1
-    for item in p_ranges_with_zeros:
-        operational_combinations *= len(item)
-    #print(">> The list of units and operating ranges considered are: {}".format(p_ranges_with_zeros))
-    #print(">> There are a total of {} operational combinations to be scanned.".format(operational_combinations))
-    #print("Starting calculations...")
+        operational_combinations *= len(unit)
+
+    # print(">> The list of units and operating ranges considered are: {}".format(p_ranges_with_zeros))
+    # print(">> There are a total of {} operational combinations to be scanned.".format(operational_combinations))
+    # print("Starting calculations...")
+
     progress_check = 0.01  # Check progress every 1%
     milestone = progress_check  # First milestone to be printed
+
     # b = len([i for i in itertools.product(*a) if sum(i) == 5])
     # for p in dict_oper_flexi.keys():
     #     dict_oper_flexi[p] = len([i for i in itertools.product(*a) if sum(i) == p])
     # for net_power in map(sum, itertools.product(*p_ranges_with_zeros)):
     #     dict_oper_flexi[net_power] += 1
     #debug_print(p_ranges_with_zeros, "p_ranges_with_zeros")
+
     for oper_combi in itertools.product(*p_ranges_with_zeros):  # Scan every combination of powers
         # fixme: why 'float'?
         net_power = round(float(sum(oper_combi)), 2)
@@ -429,16 +402,15 @@ def operational_flexibility_distribution(dict_demand,
         if progress > milestone:
             print("{} % of the operational combinations have been analyzed.".format(round(milestone*100, 10)))
             milestone += progress_check
-    #debug_print(dict_oper_flexi, "dict_oper_flexi")
+
     mykeys = list(dict_oper_flexi.keys())
     mykeys.sort()
     # fixme: list is not needed. sorted_dict_oper_flexi = sorted(dict_oper_flexi.items())
     sorted_dict_oper_flexi = {i: dict_oper_flexi[i] for i in mykeys}
-    #debug_print(sorted_dict_oper_flexi, "sorted_dict_oper_flexi")
+
     oper_flexibility_powers = list(sorted_dict_oper_flexi.keys())
     oper_flexibility_dist = list(sorted_dict_oper_flexi.values())
-    #debug_print(oper_flexibility_powers, "oper_flexibility_powers")
-    #debug_print(oper_flexibility_dist, "oper_flexibility_dist")
+
     plot_x = []
     plot_y = []
     key = -1
@@ -452,8 +424,7 @@ def operational_flexibility_distribution(dict_demand,
         if value > 0:
             plot_x.append(oper_flexibility_powers[key])
             plot_y.append(oper_flexibility_dist[key])
-    #debug_print(plot_x, "plot_x")
-    #debug_print(plot_y, "plot_y")
+
     # plt.bar(plot_x, plot_y, width=0.1)
     # plt.xticks(list(np.arange(min(oper_flexibility_powers), max(oper_flexibility_powers)+p_step_productions[0])), labels=None, rotation=-90)
     # plt.show()
@@ -653,7 +624,8 @@ def plot_flexibility_distribution(approach,
     # x_axis_steps = list(range(11)) * 0.1 * max_demand
     # x_axis_steps = range(0, (max_demand + 1))  # x ticks by steps of 1
 
-    x_axis_steps = np.arange(min(demand_range), (max(demand_range) + 1), step=plotting_step)  # TODO: Adaptive steps
+    comfortable_step = int((max(demand_range) - min(demand_range))/9.99)
+    x_axis_steps = np.arange(min(demand_range), (max(demand_range) + 1), step=max(comfortable_step, plotting_step))
     plt.xticks(x_axis_steps, labels=None, rotation=-90)
 
     ax.set_ylabel("{} multiplicity".format(approach), weight='bold')
