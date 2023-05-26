@@ -36,7 +36,7 @@ storage_units_names = ["S-01"]
 storage_units_power_ranges = [[-10, 10]]  # [[P_max_charge1, P_max_discharge1], ..., [P_max_chargeN, P_max_dischargeN]]
 storage_units_power_steps = [10, 10]
 
-dsm_range = [-10, 10]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
+dsm_range = [0,0]#dsm_range = [-10, 10]  # Range of maximal diversion through Demand Side Management (DSM) conveyed as: [-x, x]
 
 imposed_productions_names = ["IP-1"]
 imposed_productions_max_powers = []  # Production that cannot be adjusted (e.g. renewables)
