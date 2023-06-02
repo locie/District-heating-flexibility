@@ -59,27 +59,31 @@ def Sub_Unit(df_flexibility, list_power_unit):
     df=pd.DataFrame()
     p1min = min(df_flexibility["power"])
     p1max = max(df_flexibility["power"])
-    p0min = p1min - min(df_flexibility["power"])
-    p0max = p1max - p0min - max(list_power_unit)
+    p0min = p1min - min(list_power_unit)
+    p0max = p1max - max(list_power_unit)
     print (p1min , p1max , p0min , p0max)
     print("p0max+p1min =", p0max+p1min)
     for p in df_flexibility["power"]:
         print("\n")
         print("p =",p)
-        list_1=[element for element in list_power_unit if element <= p+p0min]
+        list_1=[element for element in list_power_unit if element <= p-p0min]
+        print("liste = ", list_1)
         if len(list_1)==1 :
-            df2=pd.DataFrame({"power":[p-p1min+p0min], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]]})
+            df2=pd.DataFrame({"power":[p-list_1[0]], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]]})
+            df=pd.concat([df, df2], ignore_index=True)
+            if p==p0max-list_power_unit[0]:
+                return df
             
         if len(list_1)>=2:
             sub_value=0
             for i in range(len(list_1)-1):
-                p2=p
                 sub_value += df.loc[df["power"]==p-list_1[i+1],"combinations"].values[0]
                 print('sub_value =',sub_value, type(sub_value))
-            df2=pd.DataFrame({"power":[p-p1min+p0min], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]-sub_value]})
-        df=pd.concat([df, df2], ignore_index=True)
-        if p+list_1[-1]==p0max:
-            return df
+            df2=pd.DataFrame({"power":[p-list_1[0]], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]-sub_value]})
+            df=pd.concat([df, df2], ignore_index=True)
+            if p==p0max+list_power_unit[0]:
+                return df
+        print('df =',df)
 
                 
              
@@ -115,17 +119,21 @@ def plot_flexi(f):
 
 
 #list_unit= [list(range(0,900,100))]*1 + [list(range(0,1300,100))]*1 + [list(range(0,1450,100))]*1
-list_unit_prod = [[0,1,2,3],
+list_unit_prod = [[0,1,2,3,10],
                   [-1,0,1]]
 
-list_del=[-1,0,1]
+unit=[0,1,5,6]
 
 f=build_Op_flex(list_unit_prod)
 
-f2= Sub_Unit(f,list_del)
+f2=Add_Unit(f, unit)
+
+f3= Sub_Unit(f2,unit)
 
 
-
+plt.figure()
 plt.bar(f['power'], f["combinations"])
+plt.figure()
 plt.bar(f2['power'], f2["combinations"])
-#plt.plot(f['power'], f['combinations'])
+plt.figure()
+plt.bar(f3['power'], f3["combinations"])
