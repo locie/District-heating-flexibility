@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 26 10:01:37 2023
+Created on Fri Jun  2 11:05:15 2023
 
 @author: blanchoy
 """
@@ -64,40 +64,26 @@ def Sub_Unit(df_flexibility, list_power_unit):
     print (p1min , p1max , p0min , p0max)
     print("p0max+p1min =", p0max+p1min)
     for p in df_flexibility["power"]:
-        print('\n')
-        print("p =", p)
+        print("\n")
+        print("p =",p)
         list_1=[element for element in list_power_unit if element <= p+p0min]
-        print("p+p0min =",p+p0min)
-        print("list_1 =", list_1 )
         if len(list_1)==1 :
             df2=pd.DataFrame({"power":[p-p1min+p0min], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]]})
-            print(df2)
             
         if len(list_1)>=2:
             sub_value=0
             for i in range(len(list_1)-1):
-                print(i)
-                #value = df['combinations'].where(df['power'] == 2)
-                #print('value =', value.dropna().values, type(value))
-                print(df , type(df))
-                test  = df.loc[df.power == 2, 'combinations']
-                #test2 = df.groupby(df['power'])
-                
-                #est = test.to_float(index = False)
-               
-                
-               #df.iloc[:,1].values
-                print('test = ',test.values[0], type(test))
+                p2=p
+                sub_value += df.loc[df["power"]==p-list_1[i+1],"combinations"].values[0]
+                print('sub_value =',sub_value, type(sub_value))
+            df2=pd.DataFrame({"power":[p-p1min+p0min], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]-sub_value]})
+        df=pd.concat([df, df2], ignore_index=True)
+        if p+list_1[-1]==p0max:
+            return df
+
                 
              
-                            
-            df2=pd.DataFrame({"power":p-p1min+p0min, "combinations" : df_flexibility.loc[df_flexibility["power"]==p,"combinations"]  - sub_value})
-            
-        df=pd.concat([df, df2], ignore_index=True)
-        print("df :",df)
-    #df = df.sort_values(by=['power'])
-        if p >= p0max+p1min :
-            return df
+
     
 
 def build_Op_flex(list_unit):
@@ -140,5 +126,6 @@ f2= Sub_Unit(f,list_del)
 
 
 
-plt.plot(f['power'], f["combinations"])
+plt.bar(f['power'], f["combinations"])
+plt.bar(f2['power'], f2["combinations"])
 #plt.plot(f['power'], f['combinations'])
