@@ -14,7 +14,6 @@ import heapq
 import itertools
 import math
 import matplotlib.pyplot as plt
-plt.plot(), plt.close()
 import numpy as np
 import os
 from functools import reduce
@@ -77,8 +76,9 @@ def Sub_Unit(df_flexibility, list_power_unit):
         if len(list_1)>=2:
             sub_value=0
             for i in range(len(list_1)-1):
-                sub_value += df.loc[df["power"]==p-list_1[i+1],"combinations"].values[0]
-                print('sub_value =',sub_value, type(sub_value))
+                if len(df.loc[df["power"]==p-list_1[i+1],"combinations"].values) != 0:
+                    sub_value += df.loc[df["power"]==p-list_1[i+1],"combinations"].values[0]
+                    print('sub_value =',sub_value, type(sub_value))
             df2=pd.DataFrame({"power":[p-list_1[0]], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]-sub_value]})
             df=pd.concat([df, df2], ignore_index=True)
             if p==p0max+list_power_unit[0]:
@@ -107,6 +107,9 @@ def build_Op_flex(list_unit):
         print("calculation time :", tic_end - tic_start)    
         return df
     
+    
+    
+    
 def plot_flexi(f):
     l=[]
     #for i in range(len(f)):
@@ -119,24 +122,21 @@ def plot_flexi(f):
 
 
 #list_unit= [list(range(0,900,100))]*1 + [list(range(0,1300,100))]*1 + [list(range(0,1450,100))]*1
-list_unit_prod = [[0,1,2,3,10],
-                  [0,1,2,3,10],
-                  [0,1,2,3,10],
-                  [0,1,2,3,10],
-                  [-10,0,1]]
+list_unit_prod = [[0,1,2,3],
+                  [0,9]]
 
-unit=[-3,1,5,6]
+
+unit=[0,10]
 
 f=build_Op_flex(list_unit_prod)
 
-f2=Add_Unit(f, unit)
-
-f3= Sub_Unit(f2,unit)
 
 
 plt.figure()
 plt.bar(f['power'], f["combinations"])
 plt.figure()
+f2=Add_Unit(f, unit)
 plt.bar(f2['power'], f2["combinations"])
 plt.figure()
+f3=Sub_Unit(f2,unit)
 plt.bar(f3['power'], f3["combinations"])
