@@ -34,6 +34,27 @@ def Initialization(list_power_unit):
     plt.bar(df['power'], df['combinations'], width=0.8, bottom=None,  align='center', data=None)
 
 
+
+
+def Add_Unit_normalized(df_flexibility, list_power_unit):
+    df=copy.deepcopy(df_flexibility)
+    df2=pd.DataFrame()
+    for i in range(len(list_power_unit)):
+        df['power']=df_flexibility.loc[:,'power']+list_power_unit[i]
+        #df=df.merge(df_flexibility, how='outer', on='power')
+        #df.set_index('power', inplace=True)
+        #df_flexibility.set_index('power', inplace=True)
+        df2 = pd.concat([df, df2], ignore_index=True)
+    #df2['combinations'] = df2.duplicated().groupby(df2.index).sum().add(df2['combinations'])
+    df2['combinations'] = df2.groupby("power")["combinations"].transform("sum")
+    #print("df2 :",df2)
+    #df2['combinations'] = df2.duplicated().groupby(df2.index).sum().add(df2['combinations'])
+    df2 = df2.drop_duplicates(subset = ['power'], keep = 'first')
+    df2=df2.sort_values(by=['power'])
+    #plt.bar(df2['power'], df2['combinations'], width=0.8, bottom=None,  align='center', data=None)
+    return df2
+
+
 def Add_Unit(df_flexibility, list_power_unit):
     df=copy.deepcopy(df_flexibility)
     df2=pd.DataFrame()
@@ -60,13 +81,13 @@ def Sub_Unit(df_flexibility, list_power_unit):
     p1max = max(df_flexibility["power"])
     p0min = p1min - min(list_power_unit)
     p0max = p1max - max(list_power_unit)
-    print (p1min , p1max , p0min , p0max)
-    print("p0max+p1min =", p0max+p1min)
+    #print (p1min , p1max , p0min , p0max)
+    #print("p0max+p1min =", p0max+p1min)
     for p in df_flexibility["power"]:
-        print("\n")
-        print("p =",p)
+        #print("\n")
+        #print("p =",p)
         list_1=[element for element in list_power_unit if element <= p-p0min]
-        print("liste = ", list_1)
+        #print("liste = ", list_1)
         if len(list_1)==1 :
             df2=pd.DataFrame({"power":[p-list_1[0]], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]]})
             df=pd.concat([df, df2], ignore_index=True)
@@ -78,12 +99,12 @@ def Sub_Unit(df_flexibility, list_power_unit):
             for i in range(len(list_1)-1):
                 if len(df.loc[df["power"]==p-list_1[i+1],"combinations"].values) != 0:
                     sub_value += df.loc[df["power"]==p-list_1[i+1],"combinations"].values[0]
-                    print('sub_value =',sub_value, type(sub_value))
+                    #print('sub_value =',sub_value, type(sub_value))
             df2=pd.DataFrame({"power":[p-list_1[0]], "combinations" : [df_flexibility.loc[df_flexibility["power"]==p,"combinations"].values[0]-sub_value]})
             df=pd.concat([df, df2], ignore_index=True)
             if p==p0max+list_power_unit[0]:
                 return df
-        print('df =',df)
+        #print('df =',df)
 
                 
              
@@ -100,9 +121,10 @@ def build_Op_flex(list_unit):
         df=Initialization(list_unit[0])
         for i in range(1,len(list_unit)):
            df=Add_Unit(df, list_unit[i])
-           #df.loc[:,"combinations"]=df.loc[:,"combinations"]/max(df.loc[:,"combinations"])
+           df.loc[:,"combinations"]=df.loc[:,"combinations"]/max(df.loc[:,"combinations"])
            #plt.figure()
            #plt.bar(df['power'], df['combinations'], width=0.8, bottom=None,  align='center', data=None)
+           print (i)
         tic_end = time.time()
         print("calculation time :", tic_end - tic_start)    
         return df
@@ -122,21 +144,32 @@ def plot_flexi(f):
 
 
 #list_unit= [list(range(0,900,100))]*1 + [list(range(0,1300,100))]*1 + [list(range(0,1450,100))]*1
-list_unit_prod = [[0,1,2,3],
-                  [0,9]]
+list_unit_prod = [list(range(0,100))]*300
+print(list_unit_prod)
 
 
-unit=[0,10]
+unit=[-1,0,6]
 
 f=build_Op_flex(list_unit_prod)
 
 
 
 plt.figure()
-plt.bar(f['power'], f["combinations"])
+plt.bar(f['power'], f["combinations"], color='g')
+plt.xlabel("Power demand", weight='bold')
+plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
+plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+
 plt.figure()
 f2=Add_Unit(f, unit)
-plt.bar(f2['power'], f2["combinations"])
+plt.bar(f2['power'], f2["combinations"] , color='g')
+plt.xlabel("Power demand", weight='bold')
+plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
+plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+
 plt.figure()
 f3=Sub_Unit(f2,unit)
-plt.bar(f3['power'], f3["combinations"])
+plt.bar(f3['power'], f3["combinations"], color='g')
+plt.xlabel("Power demand", weight='bold')
+plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
+plt.title('Operational multiplicity distribution (2.0)', weight='bold')

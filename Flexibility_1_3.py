@@ -600,7 +600,7 @@ def plot_flexibility_distribution(approach,
 
     if flexi_dist_prod:
         # flexi_dist_prod = [c / max(flexi_dist_prod) for c in flexi_dist_prod]
-        ax.bar(demand_range, flexi_dist_prod, width, color='g', label='Production')
+        ax.bar(demand_range, flexi_dist_prod, width, color='g')#, label='Production')
         """if flexi_by_dissipation:  # There are production, storage and dissipation units.
             ax.bar(demand_range, flexi_by_dissipation, width, color='r', label='+Dissipation',
                    bottom=flexi_dist_prod)
@@ -657,10 +657,10 @@ def plot_flexibility_distribution(approach,
     x_axis_steps = np.arange(min(demand_range), (max(demand_range) + 1), step=plotting_step)  # TODO: Adaptive steps
     plt.xticks(x_axis_steps, labels=None, rotation=-90)
 
-    ax.set_ylabel("{} multiplicity".format(approach), weight='bold')
-    ax.set_xlabel("Network's aggregated net power".format(approach), weight='bold')
-    ax.set_title("{} multiplicity distribution".format(approach), weight='bold')
-    ax.legend()
+    ax.set_ylabel("{} multiplicity (\u03A9)".format(approach), weight='bold')
+    ax.set_xlabel("Power demand".format(approach), weight='bold')
+    ax.set_title("{} multiplicity distribution (1.0)".format(approach), weight='bold')
+    #ax.legend()
     # plt.savefig('Figure.png')
 
 
