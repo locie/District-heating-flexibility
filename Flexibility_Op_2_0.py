@@ -27,6 +27,10 @@ import csv
 
 
 
+from API_availability import *
+
+
+
 def Initialization(list_power_unit):
     df=pd.DataFrame(data = {'power' : list_power_unit , 'combinations'  : [1]*len(list_power_unit) })  #'power' : [list_power_unit] , 'combinations'  : [1]*len(list_power_unit) 
     #df['power']=df.loc[:,'power']+1
@@ -140,17 +144,43 @@ def plot_flexi(f):
     plt.bar(f['power'], f["combinations"], width=0.8, bottom=None,  align='center', data=None)
     
    
-
-
+def Create_list_easy(df):
+    unit_list=[]
+    for i in range(len(df)):
+        print(df.loc[i,"production_type"][0:5])
+        if  df.loc[i,"production_type"][0:5] == "HYDRO" and  df.loc[i,"unit_type"] == "PRODUCTION_UNIT":
+            installed_p = df.loc[i,"installed_capacity"]
+            unit_list.append([-installed_p,0])
+        else:
+            installed_p = df.loc[i,"installed_capacity"]
+            unit_list.append([0,installed_p])
+    print(unit_list, type(unit_list))
+    return (unit_list)
 
 #list_unit= [list(range(0,900,100))]*1 + [list(range(0,1300,100))]*1 + [list(range(0,1450,100))]*1
+
+
+
+df_units=Plants_names('unvailability_2020-1_to_2023-5.txt')
+list_unit= Create_list_easy(df_units)
+
+f=build_Op_flex(list_unit)
+
+plt.bar(f['power'], f["combinations"] , color='g')
+plt.yscale('log')
+plt.xlabel("Power demand", weight='bold')
+plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
+plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+
+"""
 list_unit_prod = [list(range(0,100))]*300
 print(list_unit_prod)
-
 
 unit=[-1,0,6]
 
 f=build_Op_flex(list_unit_prod)
+
+
 
 
 
@@ -173,3 +203,4 @@ plt.bar(f3['power'], f3["combinations"], color='g')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+"""
