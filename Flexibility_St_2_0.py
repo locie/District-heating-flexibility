@@ -116,6 +116,31 @@ def add_unit_2(f , unit):
     
     return df
 
+
+
+
+def remove_unit_1(f , unit):
+    start_1 = min(f.loc[:,"power"])+1
+    end_1 = max(f.loc[:,"power"])-1
+    if unit[0] <= 0:
+        start_0 = start_1 - unit[0]
+    if unit[0] > 0:
+        start_0 = start_1
+    if unit[1] <= 0:
+        end_0 = end_1 
+        print(end_0)
+    if unit[1] > 0:
+        end_0 = end_1 + unit[1]
+
+        
+
+    print('+1 :', start_1 ,  end_1 ,'   +0 :',start_0 , end_0 )
+
+
+
+
+
+
 def build_Op_flex_1(list_unit):
     tic_start = time.time()
     if len(list_unit)<1:
@@ -177,27 +202,35 @@ def build_Op_flex_2_normanized(list_unit):
     
     
 
-unit=[[0,1]]*100+[[0,5]]*100+[[2,12]]*100
+#unit=[[0,1]]*100+[[0,5]]*100+[[2,12]]*100
 
-f1=build_Op_flex_2_normanized(unit)
+unit1=[[0,2],[0,2],[-4,-1]]
+
+
+
+f1=build_Op_flex_2_normanized(unit1)
+
 
 
 plt.figure()
 plt.bar(f1['power'], f1["combinations"], color='g')
-plt.yscale('log')
+#plt.yscale('log')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
 
-"""
+f2=remove_unit_1(f1, [-4,-1])
+
+
+
 plt.figure()
 plt.bar(f2['power'], f2["combinations"], color='g')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
-
+"""
 
 
 plt.figure()
