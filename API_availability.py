@@ -34,7 +34,7 @@ def access_rte(start_year , start_month , end_year , end_month):
 
     # Fetching token
     token = rte.fetch_token(token_url=token_url, method='POST', code=pp_credentials["key"],
-                            username="yolan.blanchon@grenoble-inp.fr", password="!38G2Elab",
+                            username="yolan.blanchon@grenoble-inp.fr", password="",
                             client_id=pp_credentials["client_ID"], client_secret=pp_credentials["client_secret"])
     
     #print(token)
