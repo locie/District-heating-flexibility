@@ -122,24 +122,97 @@ def add_unit_2(f , unit):
 def remove_unit_1(f , unit):
     start_1 = min(f.loc[:,"power"])+1
     end_1 = max(f.loc[:,"power"])-1
-    if unit[0] <= 0:
+    
+    if unit[0] < 0:
         start_0 = start_1 - unit[0]
+        start =  'before'
+    if unit[0] == 0:
+        start_0 = start_1 
+        start =  'same'
     if unit[0] > 0:
         start_0 = start_1
-    if unit[1] <= 0:
+        start =  'after'
+    if unit[1] < 0:
         end_0 = end_1 
-        print(end_0)
+        end =  "before"
+    if unit[1] == 0:
+        end_0 = end_1
+        end =  "same"
     if unit[1] > 0:
-        end_0 = end_1 + unit[1]
-
-        
+        end_0 = end_1 - unit[1]
+        end =  "after"
 
     print('+1 :', start_1 ,  end_1 ,'   +0 :',start_0 , end_0 )
+    print("start :",start , "    end :", end)
+    
+    
+    df_unit= init(unit)
+    df_unit.loc[:,"combinations"] = - df_unit.loc[:,"combinations"]
+    df= pd.concat([df_unit ,f], ignore_index=True)
+    #df2['combinations'] = df2.duplicated().groupby(df2.index).sum().add(df2['combinations'])
+    df['combinations'] = df.groupby("power")["combinations"].transform("sum")
+    #print("df2 :",df2)
+    #df2['combinations'] = df2.duplicated().groupby(df2.index).sum().add(df2['combinations'])
+    df = df.drop_duplicates(subset = ['power'], keep = 'first')
+    df=df.sort_values(by=['power'])
+    
+    print('df_init ='  ,df)
+    
+    lenth=len(f)
+    l1=list(range(f.head(1)["power"].values[0] , 1+f.tail(1)["power"].values[0]))
+    #print("l =",l)
+    variation_df=pd.DataFrame(data = {'power' :l1 , 'combinations'  :  [0]*len(l1) })
+    df_remove=pd.DataFrame(data = {'power' :l1 , 'combinations'  :  [0]*len(l1) })
 
+    for p in range(min(df["power"]), max(df["power"])):
+        print("\n")
+        print("p =",p)
+        delta =  df.loc[df.loc[:,"power"]==p+1]["combinations"].values[0] - df.loc[df.loc[:,"power"]==p]["combinations"].values[0]
+        print("delta =", delta)
+        
+        if start == "before" and delta > 0 :
+            variation_df.loc[variation_df['power'] == p-unit[0]+1 , 'combinations']  = delta - variation_df.loc[variation_df['power'] == p+1 , 'combinations'].values[0]
+            print("cas 1 :")
+            
+        if start == "same" and delta > 0 :
+            variation_df.loc[variation_df['power'] == p-unit[0]+1 , 'combinations']  = delta/2
+            print("cas 2 :")
+            
+        if start == "after" and delta > 0 :      
+            variation_df.loc[variation_df['power'] == p+1 , 'combinations']  = delta - variation_df.loc[variation_df['power'] == p-unit[0]+1 , 'combinations'].values[0]
+            print("cas 3 :")
+        
+        if end == "before" and delta < 0 :
+            variation_df.loc[variation_df['power'] == p-unit[1]+1 , 'combinations']  = delta - variation_df.loc[variation_df['power'] == p+1 , 'combinations'].values[0]
+            print("cas 4 :")
+            
+        if end == "same" and delta < 0 :
+            variation_df.loc[variation_df['power'] == p-unit[1]+1 , 'combinations']  = delta/2
+            print("cas 5 :")    
+        
+        if end == "after" and delta < 0 :
+            variation_df.loc[variation_df['power'] == p+1 , 'combinations']  = delta - variation_df.loc[variation_df['power'] == p-unit[1]+1 , 'combinations'].values[0]
+            print("cas 6 :")
+            
+        print("variation_df =",variation_df)
 
+    for p in range(min(df_remove["power"]), max(df_remove["power"])):
+         print("\n")
+         print(p)
+         #print("df-1 =" , df)
+         #print("variation =", variation_df.loc[variation_df['power'] == p , 'combinations'])
+         df_remove.loc[df_remove['power'] == p+1, 'combinations'] = df_remove.loc[df_remove['power'] == p, 'combinations'].values[0] + variation_df.loc[variation_df['power'] == p+1, 'combinations'].values[0]
 
+         
+         
+    dif_start = start_0-start_1
+    drop_start=list(range(len(df_remove)-dif_start , len(df_remove) ))
+    df_remove.drop(drop_start, axis=0, inplace=True)
+    dif_end = end_1-end_0     
+    drop_end=list(range(len(df_remove)-dif_end , len(df_remove) ))
+    df_remove.drop(drop_end, axis=0, inplace=True)
 
-
+    return df_remove
 
 def build_Op_flex_1(list_unit):
     tic_start = time.time()
@@ -204,11 +277,11 @@ def build_Op_flex_2_normanized(list_unit):
 
 #unit=[[0,1]]*100+[[0,5]]*100+[[2,12]]*100
 
-unit1=[[0,2],[0,2],[-4,-1]]
+unit1=[[0,2],[0,2],[0,2]]
 
 
 
-f1=build_Op_flex_2_normanized(unit1)
+f1=build_Op_flex_2(unit1)
 
 
 
@@ -220,7 +293,7 @@ plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
 
-f2=remove_unit_1(f1, [-4,-1])
+f2=remove_unit_1(f1, [0,2])
 
 
 
@@ -230,7 +303,7 @@ plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
-"""
+f3=add_unit_2(f2, [0,2])
 
 
 plt.figure()
@@ -238,5 +311,4 @@ plt.bar(f3['power'], f3["combinations"], color='g')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
-"""
 
