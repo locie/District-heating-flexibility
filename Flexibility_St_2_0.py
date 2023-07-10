@@ -99,7 +99,15 @@ def add_unit_2(f , unit):
     variation_df=pd.DataFrame(data = {'power' :l , 'combinations'  :  [0]*len(l) })
     df=pd.DataFrame(data = {'power' :l , 'combinations'  :  [0]*len(l) })
     for p in range(min(f["power"]), max(f["power"])):
-        delta =  f.loc[f.loc[:,"power"]==p+1]["combinations"].values[0] - f.loc[f.loc[:,"power"]==p]["combinations"].values[0]
+        
+        power0 = 0
+        power1 = 0
+        if p in f.loc[:,"power"].values:
+            power0 = f.loc[f.loc[:,"power"]==p]["combinations"].values[0]
+        if p+1 in f.loc[:,"power"].values:
+            power1 = f.loc[f.loc[:,"power"]==p+1]["combinations"].values[0]
+        delta = power1 - power0
+
         #print("delta =", delta)
         if delta < 0  :
             variation_df.loc[variation_df['power'] == p+unit[1]+1 , 'combinations']  += delta
@@ -308,14 +316,14 @@ def build_Op_flex_2_normanized(list_unit):
     
     
 
-#unit=[[0,1]]*100+[[0,5]]*100+[[2,12]]*100
-unit=[[1,9]]
+unit=[[0,1]]*10+[[0,5]]*10+[[2,12]]*5
+unit2=[[1,9]]
 
-unit1=[[0,2],[0,2]]+unit
+unit1=[[0,2],[0,2]]+unit2
 
+unit3=[[14,15],[2,3],[3,4],[-1,0],[-1,1]]
 
-
-f1=build_Op_flex_2(unit1)
+f1=build_Op_flex_2(unit3)
 
 
 

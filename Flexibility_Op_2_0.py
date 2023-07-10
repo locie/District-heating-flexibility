@@ -79,7 +79,7 @@ def Add_Unit(df_flexibility, list_power_unit):
     return df2
 
 
-def Sub_Unit(df_flexibility, list_power_unit):
+def Remove_Unit(df_flexibility, list_power_unit):
     df=pd.DataFrame()
     p1min = min(df_flexibility["power"])
     p1max = max(df_flexibility["power"])
@@ -89,7 +89,7 @@ def Sub_Unit(df_flexibility, list_power_unit):
     #print("p0max+p1min =", p0max+p1min)
     for p in df_flexibility["power"]:
         #print("\n")
-        #print("p =",p)
+        print("p =",p ,'   pmaax = ',p0max)
         list_1=[element for element in list_power_unit if element <= p-p0min]
         #print("liste = ", list_1)
         if len(list_1)==1 :
@@ -110,27 +110,43 @@ def Sub_Unit(df_flexibility, list_power_unit):
                 return df
         #print('df =',df)
 
-                
+def Remove_Unit_2(df_flexibility, list_power_unit):
+    p1min = df_flexibility["power"].min()
+    p1max = df_flexibility["power"].max()
+    p0min = p1min - min(list_power_unit)
+    p0max = p1max - max(list_power_unit)
+
+    df_0=pd.DataFrame()
+
+    for i in range(len(list_power_unit)):
+        if i ==1:
+            df = df_flexibility.loc[df_flexibility.loc[:,'power'] < list_power_unit[1]] 
+            df_flexibility['power'] -= list_power_unit[0]
+        if i >= 2:
+            df = df_flexibility.loc[list_power_unit[i] <  df_flexibility.loc[:,'power'] < list_power_unit[i+1]] 
+            for j in range(2,len(list_power_unit)):
+                su_df = df_0.loc[df_0.loc[:,'power'] < list_power_unit[1]]
+     
              
 
     
 
-def build_Op_flex(list_unit):
+def build_Op_flex(df_units):
     tic_start = time.time()
-    if len(list_unit)<1:
+    if len(df_units)<1:
         raise ValueError('no unit')
-    if len(list_unit)==1:
-        return Initialization(list_unit[0])
+    if len(df_units)==1:
+        return Initialization(df_units.loc[1,'list_power'])
     else:
-        df=Initialization(list_unit[0])
-        for i in range(1,len(list_unit)):
-           df=Add_Unit(df, list_unit[i])
+        df=Initialization(df_units.loc[1,'list_power'])
+        for i in range(1,len(df_units)):
+           df=Add_Unit(df, df_units.loc[i,'list_power'])
            df.loc[:,"combinations"]=df.loc[:,"combinations"]/max(df.loc[:,"combinations"])
            #plt.figure()
            #plt.bar(df['power'], df['combinations'], width=0.8, bottom=None,  align='center', data=None)
            print (i)
         tic_end = time.time()
-        print("calculation time :", tic_end - tic_start)    
+        print("calculation time :", tic_end - tic_start)
         return df
     
     
@@ -142,64 +158,153 @@ def plot_flexi(f):
         #print(f.loc[i,])
         #l.append(log10(f.loc[:,"combinations"][i]/min(f.loc[:,"combinations"])))
     plt.bar(f['power'], f["combinations"], width=0.8, bottom=None,  align='center', data=None)
-    
-   
-def Create_list_easy(df):
-    unit_list=[]
+
+
+def Create_df_units(df, nb_elements):
+    list_power=[]
+    unit_name=[]
     for i in range(len(df)):
-        print(df.loc[i,"production_type"][0:5])
         if  df.loc[i,"production_type"][0:5] == "HYDRO" and  df.loc[i,"unit_type"] == "PRODUCTION_UNIT":
             installed_p = df.loc[i,"installed_capacity"]
-            unit_list.append([-installed_p,0])
+            liste = np.linspace(-installed_p, 0, nb_elements)
+            liste = np.round(liste).astype(int).tolist()
+            liste = list(set(liste))
+            liste.sort()
+            unit_name.append(df.loc[i,"name"])
         else:
             installed_p = df.loc[i,"installed_capacity"]
-            unit_list.append([0,installed_p])
-    print(unit_list, type(unit_list))
-    return (unit_list)
+            liste = np.linspace(0, installed_p, nb_elements)
+            liste = np.round(liste).astype(int).tolist()
+            liste = list(set(liste))
+            liste.sort()
+            unit_name.append(df.loc[i,"name"])
+        list_power.append(liste)
+    #print(list_power, type(list_power))
+    df2=pd.DataFrame({"name":unit_name, "list_power" : list_power})
+    return (df2)
 
-#list_unit= [list(range(0,900,100))]*1 + [list(range(0,1300,100))]*1 + [list(range(0,1450,100))]*1
+
+
+def build_df_events(f1, list_events, df_units):
+    df_HeatMap = pd.DataFrame()
+    df_N0 = f1
+    for i in range(len(f1)):
+        df_N0.reset_index()
+        name = list_events.loc[i,'name']
+        
+        if list_events.loc[i,'date_type']=='start' and df_units.loc[df_units.loc[:,'name']==name]['list_power'].values[0] != [0,0]:
+            print(df_units.loc[df_units.loc[:,'name']==name])
+            df_N1 = Remove_Unit(df_N0 , df_units.loc[df_units.loc[:,'name']==name]['list_power'].values[0])  
+            
+        if list_events.loc[i,'date_type']=='end':
+            print(df_units.loc[df_units.loc[:,'name']==name])
+            df_N1 = Add_Unit(df_N0 , df_units.loc[df_units.loc[:,'name']==name]['list_power'].values[0])
+            
+        df_HeatMap = pd.concat([df_HeatMap, df_N1], ignore_index=True)
+        df_N0 = df_N1
 
 
 
-df_units=Plants_names('unvailability_2020-1_to_2023-5.txt')
-list_unit= Create_list_easy(df_units)
 
-f=build_Op_flex(list_unit)
+def build_df_dipso(df_units, list_events, nb_elements):
+    df_units_available =df_units.transpose()
+    #print(df_units_available)
+    #print(df_units_available.loc['name',:])
+    df_units_available.columns = df_units_available.loc['name',:]
+    df_units_available.insert(loc=0 , column="Date", value=['','init'])
+    df_units_available =  df_units_available.drop('name')
+    
+    for i in range(len(list_events)):
+        df = df_units_available.tail(1)
+        
+        date = list_events.loc[i,'date']
+        unit_name = list_events.loc[i,'name']
+        power = list_events.loc[i,'available_capacity']
+        unit_type = list_events.loc[i,'unit_type']
+        
+        if unit_type == "PRODUCTION_UNIT":
+            liste = np.linspace(-power, 0, nb_elements)
+            liste = np.round(liste).astype(int).tolist()
+            liste = list(set(liste))
+            liste.sort()
+        else:
+            liste = np.linspace(0, power, nb_elements)
+            liste = np.round(liste).astype(int).tolist()
+            liste = list(set(liste))
+            liste.sort()
+            
+        df.columns 
+        #print(unit_name)
+        #print(liste)    
+            
+        df_units_available=pd.concat([df_units_available, df], ignore_index=True)    
+        df_units_available.tail(1).loc[:,'Date']=date
+        df_units_available.at[len(df_units_available)-1 ,unit_name]= liste
+        print (i)
+        
+    with open("df_availability.txt", 'w') as csv_file:
+        df.to_csv(index= False ,path_or_buf=csv_file)
+    return df_units_available       
+        
 
-plt.bar(f['power'], f["combinations"] , color='g')
-plt.yscale('log')
-plt.xlabel("Power demand", weight='bold')
-plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
-plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+
+
+
+
+
+
+df= pd.read_csv('unvailability_2020-1_to_2023-5.txt' , encoding='latin-1')
+test=DataFrame_format('unvailability_2020-1_to_2023-5.txt')
+list_plants=Plants_names('unvailability_2020-1_to_2023-5.txt') 
+list_events = DataFrame_format('unvailability_2020-1_to_2023-5.txt')
+
+df_units = Create_df_units(list_plants,2)
+
+
+df_units_available = build_df_dipso(df_units, list_events,2)
+
 
 """
-list_unit_prod = [list(range(0,100))]*300
-print(list_unit_prod)
+f1 = build_Op_flex(df_units)
 
-unit=[-1,0,6]
-
-f=build_Op_flex(list_unit_prod)
+build_df_events(f1, list_events , df_units)
 
 
-
-
-
-plt.figure()
-plt.bar(f['power'], f["combinations"], color='g')
+plt.bar(f1['power'], f1["combinations"] , color='g')
+#plt.yscale('log')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
+
+
+U1=[0,1,2,3]
+U2=[-1,2,7]
+
+f1=Initialization(U1)
+f2=Add_Unit(f1, U2)
+f3=Remove_Unit(f2, U1)
+
 plt.figure()
-f2=Add_Unit(f, unit)
+plt.bar(f1['power'], f1["combinations"] , color='g')
+#plt.yscale('log')
+plt.xlabel("Power demand", weight='bold')
+plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
+plt.title('Operational multiplicity distribution (2.0)', weight='bold')
+
+
+plt.figure()
 plt.bar(f2['power'], f2["combinations"] , color='g')
+#plt.yscale('log')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')
 
+
+
 plt.figure()
-f3=Sub_Unit(f2,unit)
-plt.bar(f3['power'], f3["combinations"], color='g')
+plt.bar(f3['power'], f3["combinations"] , color='g')
+#plt.yscale('log')
 plt.xlabel("Power demand", weight='bold')
 plt.ylabel("Operational multiplicity  (\u03A9)", weight='bold')
 plt.title('Operational multiplicity distribution (2.0)', weight='bold')

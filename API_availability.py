@@ -180,5 +180,7 @@ def Plants_names(file_name):
 if __name__ == "__main__":
     #i = access_rte(2020, 1 , 2023 , 5)   # start : yyyy  , mm   , end : yyyy ,  mm
     #print('y :',y)
+    df= pd.read_csv('unvailability_2020-1_to_2023-5.txt' , encoding='latin-1')
     test=DataFrame_format('unvailability_2020-1_to_2023-5.txt')
     test2=Plants_names('unvailability_2020-1_to_2023-5.txt')
+
