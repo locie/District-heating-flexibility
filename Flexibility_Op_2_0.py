@@ -306,7 +306,11 @@ def Plot_Heatmap(file_name):
 
 #a = Build_df_heatmap('df_availability.txt')
 
-b=Plot_Heatmap("HM_YtotMtot.txt")
+#b=Plot_Heatmap("HM_YtotMtot.txt")
+
+
+df_dispo = pd.read_csv('df_availability.txt' , encoding='latin-1')
+
 
 
 
