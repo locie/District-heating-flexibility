@@ -23,6 +23,8 @@ import tracemalloc
 import warnings
 import pandas as pd
 import csv
+import seaborn as sns
+from matplotlib.colors import LogNorm
 
 
 
@@ -243,14 +245,77 @@ def build_df_dipso(df_units, list_events, nb_elements):
         print (i)
         
     with open("df_availability.txt", 'w') as csv_file:
-        df.to_csv(index= False ,path_or_buf=csv_file)
+        df_units_available.to_csv(index= False ,path_or_buf=csv_file)
     return df_units_available       
         
 
 
 
+def Build_df_heatmap(file_name):
+    df_heatmap= pd.DataFrame()
+    df = pd.read_csv(file_name , encoding='latin-1')
+    m=1
+    y=2020
+    p=False
+    for year in ['2020','2021','2022']:
+        for month in ['01',"02","03","04",'05',"06","07","08",'09',"10","11","12"]:
+            for i in range(len(df)):
+                date=df.loc[i,'Date'][:7]
+                if date == year+"-"+month:
+                    #print ("la",date)
+                    liste=df.loc[i,:].values[1:]
+                    liste_convertie = [eval(element) for element in liste]
+                    #print(liste_convertie)
+                    df_liste = pd.DataFrame({'list_power' : liste_convertie})
+                    #print(df_liste)
+                    flexi=build_Op_flex(df_liste).reset_index()
+                    print(flexi)
+                    if p == False:
+                        df_heatmap['power'] = flexi.loc[:,'power']
+                        df_heatmap[date] = flexi.loc[:,'combinations']
+                        MinGlob= min(flexi.loc[:,'combinations'])
+                        p = True
+                    else:
+                        df_heatmap[date] = MinGlob
+                        for i in range(len(flexi)):
+                            MinLoc = min(flexi.loc[:,'combinations'])
+                            power=flexi.loc[i,'power']
+                            combinations=flexi.loc[i,'combinations']
+                            print(power, year, month)
+                            if combinations == 0:
+                                combinations = MinGlob
+                            df_heatmap.loc[df_heatmap.loc[:,'power']==power , date]= combinations*MinGlob/MinLoc
+                            print(type( df_heatmap.loc[df_heatmap.loc[:,'power']==power,date]))
+                    break
+    with open("HM_YtotMtot.txt", 'w') as csv_file:
+        df_heatmap.to_csv(index= False ,path_or_buf=csv_file)
+    return df_heatmap
+            
+#df['name'] = L_name
 
 
+
+
+def Plot_Heatmap(file_name):
+    df_heatmap = pd.read_csv(file_name , encoding='latin-1')
+    df_heatmap = df_heatmap.set_index('power')
+    print(df_heatmap)
+    df_heatmap_log = np.log10(df_heatmap)
+    sns.heatmap(df_heatmap_log)
+
+
+#a = Build_df_heatmap('df_availability.txt')
+
+b=Plot_Heatmap("HM_YtotMtot.txt")
+
+
+
+"""
+a = Build_df_heatmap('df_availability.txt')
+sns.heatmap(a)
+
+
+ 
 
 
 df= pd.read_csv('unvailability_2020-1_to_2023-5.txt' , encoding='latin-1')
@@ -263,8 +328,9 @@ df_units = Create_df_units(list_plants,2)
 
 df_units_available = build_df_dipso(df_units, list_events,2)
 
+a = Build_df_heatmap('df_availability.txt')
 
-"""
+
 f1 = build_Op_flex(df_units)
 
 build_df_events(f1, list_events , df_units)
